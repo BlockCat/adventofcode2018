@@ -31,7 +31,7 @@ fn exercise_2(frequency_list: Vec<i32>) -> i32{
 }
 
 fn frequency_delta_list() -> Vec<i32> {
-    let file = File::open("input.txt").expect("Could not open file: input.txt for exercise 1");
+    let file = File::open("input/day1_in.txt").expect("Could not open file: input.txt for exercise 1");
     let reader = BufReader::new(file);
 
     return reader.lines().map(|l| l.unwrap()
