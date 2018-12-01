@@ -14,20 +14,17 @@ fn exercise_1(frequency_list: Vec<i32>) -> i32{
 fn exercise_2(frequency_list: Vec<i32>) -> i32{    
     let mut counter = 0i32;
 
-    let mut visited_set = HashSet::new();
-    visited_set.reserve(frequency_list.len());
-    visited_set.insert(0i32);
-
-    loop {
-        for freq_change in frequency_list.iter() {
-            counter = counter + freq_change;
-            if visited_set.contains(&counter) {                
-                return counter;
-            } else {
-                visited_set.insert(counter);
-            }
+    let mut visited_set = HashSet::with_capacity(frequency_list.len());    
+    visited_set.insert(0);
+    
+    for freq_change in frequency_list.into_iter().cycle() {
+        counter += freq_change;
+        if !visited_set.insert(counter) {
+            break;
         }
     }
+    
+    counter
 }
 
 fn frequency_delta_list() -> Vec<i32> {
