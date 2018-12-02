@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 
 #[derive(Debug, PartialEq)]
 struct PartialCheckSum {
@@ -28,15 +26,15 @@ fn exercise_1(input: Vec<String>) -> i32 {
     doubles * triples
 }
 
-fn check_id(id: String) -> PartialCheckSum {    
-    let mut grouping = HashMap::with_capacity(id.len());
-    for ch in id.chars() {
-        *grouping.entry(ch).or_insert(0) += 1;
-    }
+fn check_id(id: String) -> PartialCheckSum {
+    let grouping = id.bytes().fold([0u8; 26], |mut acc, c| {
+        acc[c as usize - ('a' as usize)] += 1;
+        acc
+    });
 
     PartialCheckSum {
-        is_double: grouping.values().any(|v| *v == 2),
-        is_triple: grouping.values().any(|v| *v == 3)
+        is_double: grouping.iter().any(|v| *v == 2),
+        is_triple: grouping.iter().any(|v| *v == 3)
     }
 }
 

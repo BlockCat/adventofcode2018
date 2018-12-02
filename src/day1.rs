@@ -1,5 +1,3 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::collections::HashSet;
 
 pub fn execute_exercises() {
