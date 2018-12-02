@@ -2,22 +2,24 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+#[derive(Debug, PartialEq)]
+struct PartialCheckSum {
+    is_double: bool,
+    is_triple: bool
+}
+
 pub fn execute_exercises() {
     println!("Checksum ex1: {}", exercise_1(read_input()));
     println!("Common between boxes: {}", exercise_2(read_input()));
 }
 
-#[derive(Debug, PartialEq)]
-struct PartialCheckSum {
-    doubles: bool,
-    triples: bool
-}
-
 fn exercise_1(input: Vec<String>) -> i32 {
-    let ids: Vec<PartialCheckSum> = input.into_iter().map(check_id).collect();
-
-    let doubles = ids.iter().filter(|pcs| pcs.doubles).count() as i32;
-    let triples = ids.iter().filter(|pcs| pcs.triples).count() as i32;
+    let (doubles, triples) = input
+        .into_iter()
+        .map(check_id)
+        .fold((0i32, 0i32), |(d, t), n| {
+            (d + n.is_double as i32, t + n.is_triple as i32)
+        });
 
     doubles * triples
 }
@@ -31,7 +33,7 @@ fn exercise_2(input: Vec<String>) -> String {
         }
     }
 
-    String::from("")
+    unreachable!()
 }
 
 fn read_input() -> Vec<String> {
@@ -42,13 +44,14 @@ fn read_input() -> Vec<String> {
 
 
 fn check_id(id: String) -> PartialCheckSum {    
-    let mut grouping = HashMap::new();
+    let mut grouping = HashMap::with_capacity(id.len());
     for ch in id.chars() {
         *grouping.entry(ch).or_insert(0) += 1;
-    }   
+    }
+
     PartialCheckSum {
-        doubles: grouping.iter().any(|(_, v)| *v == 2),
-        triples: grouping.iter().any(|(_, v)| *v == 3)
+        is_double: grouping.values().any(|v| *v == 2),
+        is_triple: grouping.values().any(|v| *v == 3)
     }
 }
 
@@ -59,13 +62,13 @@ mod tests {
 
     #[test]
     fn ex1_s1() {
-        assert_eq!(check_id("abcdef".to_string()), PartialCheckSum { doubles: false, triples: false});
-        assert_eq!(check_id("bababc".to_string()), PartialCheckSum { doubles: true, triples: true});
-        assert_eq!(check_id("abbcde".to_string()), PartialCheckSum { doubles: true, triples: false});
-        assert_eq!(check_id("abcccd".to_string()), PartialCheckSum { doubles: false, triples: true});
-        assert_eq!(check_id("aabcdd".to_string()), PartialCheckSum { doubles: true, triples: false});
-        assert_eq!(check_id("abcdee".to_string()), PartialCheckSum { doubles: true, triples: false});
-        assert_eq!(check_id("ababab".to_string()), PartialCheckSum { doubles: false, triples: true});
+        assert_eq!(check_id("abcdef".to_string()), PartialCheckSum { is_double: false, is_triple: false});
+        assert_eq!(check_id("bababc".to_string()), PartialCheckSum { is_double: true, is_triple: true});
+        assert_eq!(check_id("abbcde".to_string()), PartialCheckSum { is_double: true, is_triple: false});
+        assert_eq!(check_id("abcccd".to_string()), PartialCheckSum { is_double: false, is_triple: true});
+        assert_eq!(check_id("aabcdd".to_string()), PartialCheckSum { is_double: true, is_triple: false});
+        assert_eq!(check_id("abcdee".to_string()), PartialCheckSum { is_double: true, is_triple: false});
+        assert_eq!(check_id("ababab".to_string()), PartialCheckSum { is_double: false, is_triple: true});
     }
 
     #[test]
