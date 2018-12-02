@@ -13,6 +13,12 @@ pub fn execute_exercises() {
     println!("Common between boxes: {}", exercise_2(read_input()));
 }
 
+fn read_input() -> Vec<String> {
+    let file = File::open("input/day2_in.txt").expect("Could not open file: input.txt for exercise 1");
+    let reader = BufReader::new(file);
+    return reader.lines().map(|l| l.unwrap()).collect();
+}
+
 fn exercise_1(input: Vec<String>) -> i32 {
     let (doubles, triples) = input
         .into_iter()
@@ -23,25 +29,6 @@ fn exercise_1(input: Vec<String>) -> i32 {
 
     doubles * triples
 }
-
-fn exercise_2(input: Vec<String>) -> String {
-    for i in 0..input.len() {        
-        for j in i..input.len() {
-            if input[i].chars().zip(input[j].chars()).filter(|(a, b)| a != b).count() == 1 {
-                return input[i].chars().zip(input[j].chars()).filter(|(a, b)| a == b).map(|(_, b)| b).collect();
-            }
-        }
-    }
-
-    unreachable!()
-}
-
-fn read_input() -> Vec<String> {
-    let file = File::open("input/day2_in.txt").expect("Could not open file: input.txt for exercise 1");
-    let reader = BufReader::new(file);
-    return reader.lines().map(|l| l.unwrap()).collect();
-}
-
 
 fn check_id(id: String) -> PartialCheckSum {    
     let mut grouping = HashMap::with_capacity(id.len());
@@ -54,6 +41,19 @@ fn check_id(id: String) -> PartialCheckSum {
         is_triple: grouping.values().any(|v| *v == 3)
     }
 }
+
+fn exercise_2(input: Vec<String>) -> String {
+    for i in 0..input.len() {        
+        for j in i..input.len() {
+            if input[i].chars().zip(input[j].chars()).filter(|(a, b)| a != b).count() == 1 {
+                return input[i].chars().zip(input[j].chars()).filter(|(a, b)| a == b).map(|(_, b)| b).collect();
+            }
+        }
+    }
+    unreachable!()
+}
+
+
 
 #[cfg(test)]
 mod tests {
