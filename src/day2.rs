@@ -14,9 +14,7 @@ pub fn execute_exercises() {
 }
 
 fn read_input() -> Vec<String> {
-    let file = File::open("input/day2_in.txt").expect("Could not open file: input.txt for exercise 1");
-    let reader = BufReader::new(file);
-    return reader.lines().map(|l| l.unwrap()).collect();
+    include_str!("../input/day2_in.txt").lines().map(|l| String::from(l)).collect()
 }
 
 fn exercise_1(input: Vec<String>) -> i32 {
@@ -53,12 +51,11 @@ fn exercise_2(input: Vec<String>) -> String {
     unreachable!()
 }
 
-
-
 #[cfg(test)]
 mod tests {
     
-    use super::{PartialCheckSum, check_id, exercise_1, exercise_2};
+    use super::*;
+    use crate::test::Bencher;
 
     #[test]
     fn ex1_s1() {
@@ -81,5 +78,26 @@ mod tests {
     fn ex2_s1() {
         let v: Vec<String> = vec!("abcde","fghij","klmno","pqrst","fguij","axcye","wvxyz").into_iter().map(|t| t.to_string()).collect();
         assert_eq!(exercise_2(v), String::from("fgij"));
+    }
+
+    #[bench]
+    fn bench_read(b: &mut Bencher) {
+        b.iter(|| {
+            read_input();
+        });
+    }
+
+    #[bench]
+    fn bench_p1(b: &mut Bencher) {
+        b.iter(|| {
+            exercise_1(read_input());
+        });
+    }
+
+    #[bench]
+    fn bench_p2(b: &mut Bencher) {
+        b.iter(|| {
+            exercise_2(read_input());
+        });
     }
 }

@@ -26,20 +26,15 @@ fn exercise_2(frequency_list: Vec<i32>) -> i32{
     
     counter
 }
-
 fn frequency_delta_list() -> Vec<i32> {
-    let file = File::open("input/day1_in.txt").expect("Could not open file: input.txt for exercise 1");
-    let reader = BufReader::new(file);
-
-    return reader.lines().map(|l| l.unwrap()
-            .parse::<i32>()
-            .unwrap()).collect();
+    return include_str!("../input/day1_in.txt").lines().map(|l| l.parse::<i32>().unwrap()).collect();
 }
 
 #[cfg(test)]
 mod tests {
     
-    use super::{exercise_1, exercise_2};
+    use super::{exercise_1, exercise_2, frequency_delta_list};    
+    use crate::test::Bencher;
 
     #[test]
      fn ex1_s1() {        
@@ -79,6 +74,27 @@ mod tests {
     #[test]
     fn ex2_s5() {
         assert_eq!(exercise_2(vec![7, 7, -2, -7, -4]), 14);
+    }
+
+    #[bench]
+    fn bench_reading(b: &mut Bencher) {
+        b.iter(|| {
+            frequency_delta_list();
+        });
+    }
+
+    #[bench]
+    fn bench_ex2(b: &mut Bencher) {        
+        b.iter(|| {
+            exercise_2(frequency_delta_list());
+        });        
+    }
+
+    #[bench]
+    fn bench_ex1(b: &mut Bencher) {        
+        b.iter(|| {
+            exercise_1(frequency_delta_list());
+        });        
     }
 
 }
