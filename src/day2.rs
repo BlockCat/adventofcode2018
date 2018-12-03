@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 struct PartialCheckSum {
