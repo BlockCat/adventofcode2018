@@ -68,6 +68,11 @@ fn exercise_1(input: Vec<Area>) -> i32 {
     // What about using this sweep algorithm immediatly? from top to bottom.
     // the events would be the start of a rectangle and the end of a rectangle.
     // There can be a bookkeeping of which rectangle has not overlapped
+    /* resources:
+        events: https://doc.rust-lang.org/std/collections/binary_heap/
+        store it in a ordered list maybe? so that a sweep in 1D can be done in O(k) where k is the amount of areas on a line.
+    */
+
 }
 
 fn exercise_2(input: Vec<Area>) -> i32 {
