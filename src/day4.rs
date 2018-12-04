@@ -1,222 +1,188 @@
 use std::collections::HashMap;
-use std::str::FromStr;
-use std::num::ParseIntError;
-use regex::Regex;
 
-#[derive(Debug, Copy, Clone)]
-struct Date {
-    year: i32,
-    month: i32,
-    day: i32,
-    hour: i32,
-    minute: i32
-}
+mod preprocess {
+    use std::str::FromStr;
+    use std::num::ParseIntError;
+    use regex::Regex;
 
-
-impl FromStr for Date {
-    type Err = ParseIntError;
-
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        let re: Regex = Regex::new(r"\[(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\]").unwrap();
-        let caps = re.captures(source).unwrap();
-        Ok(Date {
-            year: caps.get(1).unwrap().as_str().parse::<i32>().unwrap(),
-            month: caps.get(2).unwrap().as_str().parse::<i32>().unwrap(),
-            day: caps.get(3).unwrap().as_str().parse::<i32>().unwrap(),
-            hour: caps.get(4).unwrap().as_str().parse::<i32>().unwrap(),
-            minute: caps.get(5).unwrap().as_str().parse::<i32>().unwrap()})
-        
+    #[derive(Debug, Copy, Clone)]
+    struct Date {
+        year: i32,
+        month: i32,
+        day: i32,
+        hour: i32,
+        minute: i32
     }
-}
 
-#[derive(Debug)]
-enum GuardEvent {
-    StartShift(Date, i32),
-    StartSleep(Date),
-    EndSleep(Date)
-}
 
-impl FromStr for GuardEvent {
-    type Err = ();
-    
-    fn from_str(source: &str) -> Result<Self, ()> {
-        let date = source.parse::<Date>().unwrap();
-        let significant_char = &source[19..20];       
+    impl FromStr for Date {
+        type Err = ParseIntError;
 
-        match significant_char {
-            "G" => {
-                let re: Regex = Regex::new(r"#(\d+) ").unwrap();
-                let caps = re.captures(source).unwrap();
-                Ok(GuardEvent::StartShift(date, caps.get(1).unwrap().as_str().parse::<i32>().unwrap()))
-            },
-            "f" => Ok(GuardEvent::StartSleep(date)),
-            "w" => Ok(GuardEvent::EndSleep(date)),
-            _ => Err(())
+        fn from_str(source: &str) -> Result<Self, Self::Err> {
+            let re: Regex = Regex::new(r"\[(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\]").unwrap();
+            let caps = re.captures(source).unwrap();
+            Ok(Date {
+                year: caps.get(1).unwrap().as_str().parse::<i32>().unwrap(),
+                month: caps.get(2).unwrap().as_str().parse::<i32>().unwrap(),
+                day: caps.get(3).unwrap().as_str().parse::<i32>().unwrap(),
+                hour: caps.get(4).unwrap().as_str().parse::<i32>().unwrap(),
+                minute: caps.get(5).unwrap().as_str().parse::<i32>().unwrap()})
+            
         }
     }
-}
 
-pub fn execute_exercises() {
-    //println!("strat 1: {}", exercise_1(read_input()));
-    println!("strat 2: {}", exercise_2(read_input()));    
-}
+    #[derive(Debug)]
+    enum GuardEvent {
+        StartShift(Date, i32),
+        StartSleep(Date),
+        EndSleep(Date)
+    }
 
-fn read_input() -> Vec<GuardEvent> {  
-    read_input_str(include_str!("../input/day4_in.txt"))    
-}
+    impl FromStr for GuardEvent {
+        type Err = ();
+        
+        fn from_str(source: &str) -> Result<Self, ()> {
+            let date = source.parse::<Date>().unwrap();
+            let significant_char = &source[19..20];       
 
-fn read_input_str(input:  &str) -> Vec<GuardEvent> {
-    input.lines().map(|l| { l.parse::<GuardEvent>().unwrap()}).collect()
-}
+            match significant_char {
+                "G" => {
+                    let re: Regex = Regex::new(r"#(\d+) ").unwrap();
+                    let caps = re.captures(source).unwrap();
+                    Ok(GuardEvent::StartShift(date, caps.get(1).unwrap().as_str().parse::<i32>().unwrap()))
+                },
+                "f" => Ok(GuardEvent::StartSleep(date)),
+                "w" => Ok(GuardEvent::EndSleep(date)),
+                _ => Err(())
+            }
+        }
+    }
+    
+    pub fn pre_process(input: &str) -> Vec<(i32, i32, i32)> {
+            
+        #[derive(Debug, PartialEq)] enum State {
+            Sleep {guard: i32, sleep: i32, wake: i32},
+            Wait
+        };
+        let mut v: Vec<GuardEvent> = input.lines().map(|l| { l.parse::<GuardEvent>().unwrap()}).collect();
+        
+        v.sort_by(|a, b| {
+            let ad = match a {
+                GuardEvent::StartShift(d, _) => d,
+                GuardEvent::StartSleep(d) => d,
+                GuardEvent::EndSleep(d) => d,
+            };
 
-fn exercise_1(input: Vec<GuardEvent>) -> i32 {
-    let sleepy_guard = find_most_sleeping_guard(&input);
+            let bd = match b {
+                GuardEvent::StartShift(d,_) => d,
+                GuardEvent::StartSleep(d) => d,
+                GuardEvent::EndSleep(d) => d,
+            };
 
-    #[derive(Debug, PartialEq)] enum State {
-        Sleep {guard: i32, sleep: i32, wake: i32},
-        Wait
-    };
+            let aa = [ad.year, ad.month, ad.day, ad.hour, ad.minute];
+            let ba = [bd.year, bd.month, bd.day, bd.hour, bd.minute];
 
-    let (mm, _) = input
-        .into_iter()
-        .scan((0i32, 0i32), |(guard, sleep), event| {
-        match event {
-            GuardEvent::StartShift(_, g) => {
-                *guard = g;
-                Some(State::Wait)}
-            GuardEvent::StartSleep(d) => { 
-                *sleep = d.minute; 
-                Some(State::Wait)}
-            GuardEvent::EndSleep(d) => {
-                if *guard == sleepy_guard {
+            aa.cmp(&ba)
+        });
+
+        v.into_iter().scan((0i32, 0i32), |(guard, sleep), event| {
+            match event {
+                GuardEvent::StartShift(_, g) => {
+                    *guard = g;
+                    Some(State::Wait)}
+                GuardEvent::StartSleep(d) => { 
+                    *sleep = d.minute; 
+                    Some(State::Wait)}
+                GuardEvent::EndSleep(d) => {
                     Some(State::Sleep {
                         guard: *guard, 
                         sleep: *sleep, 
                         wake: d.minute
-                    })
-                } else {
-                    Some(State::Wait)
+                    })                
                 }
-            }
-        }        
-    }).filter_map(|s| match s {
-        State::Sleep { guard, sleep, wake} => Some((guard, sleep, wake)),
-        _ => None
-    }).fold([0u8; 60], |mut acc, (guard, sleep, wake)| {
-        for i in sleep..wake {
-            acc[i as usize] += 1;
-        }
-
-        acc
-    }).into_iter()
-    .enumerate()
-    .max_by(|(_, a), (_, b)| a.cmp(b))
-    .unwrap();
-
-    sleepy_guard * (mm as i32)    
+            }        
+        }).filter_map(|s| match s {
+            State::Sleep { guard, sleep, wake} => Some((guard, sleep, wake)),
+            _ => None
+        }).collect()    
+    }
 }
 
-fn process_input(input: Vec<GuardEvent>) -> Vec<(i32, i32, i32)> {
 
-    #[derive(Debug, PartialEq)] enum State {
-        Sleep {guard: i32, sleep: i32, wake: i32},
-        Wait
-    };
+pub fn execute_exercises() {
+    //preprocess::pre_process(include_str!("../input/day4_in.txt")).into_iter().for_each(|(guard, sleep, wake)| println!("{} {} {}", guard, sleep, wake));
+    println!("strat 1: {}", exercise_1(read_input()));
+    println!("strat 2: {}", exercise_2(read_input()));    
+}
 
-    input.into_iter()
-        .scan((0i32, 0i32), |(guard, sleep), event| {
-        match event {
-            GuardEvent::StartShift(_, g) => {
-                *guard = g;
-                Some(State::Wait)}
-            GuardEvent::StartSleep(d) => { 
-                *sleep = d.minute; 
-                Some(State::Wait)}
-            GuardEvent::EndSleep(d) => {
-                Some(State::Sleep {
-                    guard: *guard, 
-                    sleep: *sleep, 
-                    wake: d.minute
-                })                
-            }
-        }        
-    }).filter_map(|s| match s {
-        State::Sleep { guard, sleep, wake} => Some((guard, sleep, wake)),
-        _ => None
+fn read_input() -> Vec<(i32, i32, i32)> {  
+    read_input_str(include_str!("../input/day4_preprocessed.txt"))    
+}
+
+fn read_input_str(input:  &str) -> Vec<(i32, i32, i32)> {
+    input.lines().map(|l| { 
+        let spl: Vec<&str> = l.split(" ").collect();        
+        (spl[0].parse::<i32>().unwrap(), spl[1].parse::<i32>().unwrap(), spl[2].parse::<i32>().unwrap())
     }).collect()
 }
 
-fn find_most_sleeping_guard(input: &Vec<GuardEvent>) -> i32 {
-    let mut cumulative_map = HashMap::with_capacity(365); 
 
-    let mut current_shift: Option<i32> = None;    
-    let mut date: Option<Date> = None;
+fn exercise_1(input: Vec<(i32, i32, i32)>) -> i32 {    
+    let guard_sleep = input.iter()
+        .fold(HashMap::with_capacity(100), |mut acc, &(guard, sleep, wake)| {
+            *acc.entry(guard).or_insert(0) += wake - sleep;
+            acc
+        });
 
-    let mut current_guard = 0;
-    let mut current_max = 0;
+    let (sleepy_guard, _) = guard_sleep.into_iter().max_by(|(_, a), (_, b)| a.cmp(b)).unwrap();
 
-    for event in input {
-        match event {
-            GuardEvent::StartShift(_, g) => current_shift = Some(*g),
-            GuardEvent::StartSleep(d) => date = Some(*d),
-            GuardEvent::EndSleep(d) => {                              
-                let minutes = cumulative_map.entry(current_shift.unwrap()).or_insert(0);    
-                *minutes += d.minute - date.unwrap().minute;
+    let minutes = input.into_iter()
+        .filter(|(guard, _, _)| *guard == sleepy_guard)        
+        .fold([0u8; 60], |mut acc, (_, sleep, wake)| {            
+            for m in sleep..wake {
+                acc[m as usize] += 1;
+            }            
+            acc
+        });
+        
+    let (minute, _) = minutes.into_iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| a.cmp(b))        
+        .unwrap();        
+    
 
-                if *minutes > current_max {
-                    current_guard = current_shift.unwrap();
-                    current_max = *minutes;
-                }
-            }
-        }
-    }
-
-
-    current_guard
+    sleepy_guard * (minute as i32)
 }
 
-fn exercise_2(input: Vec<GuardEvent>) -> i32 {
-    let mut guard_minutes = [[0u8; 60];4000];
+fn exercise_2(input: Vec<(i32, i32, i32)>) -> i32 {    
 
-    let mut current_shift: Option<i32> = None;
-    let mut date: Option<Date> = None;
+    let (guard, (minute, _)) = input.into_iter().fold(HashMap::with_capacity(200), |mut acc, (guard, sleep, wake)| {
+        let ref mut minutes = *acc.entry(guard).or_insert([0u8; 60]);
+        for m in sleep..wake {
+            minutes[m as usize] += 1;            
+        }        
+        
+        acc
+    }).into_iter().map(|(guard, minutes)| {
+        // (guard, (minute, sleeps))
+        let c = minutes.into_iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.cmp(b))
+            .map(|(a, &b)| (a, b))
+            .unwrap();
+        (guard, c.clone())
+    }).max_by(|(_, (_, a)), (_, (_, b))| a.cmp(b))
+    .unwrap();
 
-    for event in input {
-        match event {
-            GuardEvent::StartShift(d, g) => {                
-                current_shift = Some(g);
-            },
-            GuardEvent::StartSleep(d) => date = Some(d),
-            GuardEvent::EndSleep(d) => {                                
-                let old_date = date.unwrap();
-                for m in old_date.minute..d.minute {                    
-                    guard_minutes[current_shift.unwrap() as usize][m as usize] += 1;
-                }                
-            }
-        }
-    }
-
-    let mut max_guard = 0;
-    let mut max_minute = 0;
-    let mut max_sleepy_minute = 0;
-
-    for g in 0..4000 {
-        for m in 0..60 {
-            if guard_minutes[g][m] > max_minute {
-                max_minute = guard_minutes[g][m];
-                max_guard = g as i32;
-                max_sleepy_minute = m as i32;
-            }
-        }
-    }
-
-    max_guard * max_sleepy_minute
+    guard * (minute as i32)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::preprocess::*;
     use crate::test::Bencher;
+
 
     #[test]
     fn d4_ex1_s1() {
@@ -237,9 +203,7 @@ mod tests {
 [1518-11-05 00:03] Guard #99 begins shift
 [1518-11-05 00:45] falls asleep
 [1518-11-05 00:55] wakes up";
-        let input = read_input_str(c);
-        //println!("{:?}", input);
-        assert_eq!(find_most_sleeping_guard(&input), 10);
+        let input = pre_process(c);
         assert_eq!(exercise_1(input), 240);
     }
     
@@ -250,7 +214,8 @@ mod tests {
 
     #[test]
     fn d4_ex2_s1() {
-      let c = r"[1518-11-01 00:00] Guard #10 begins shift
+      let c = 
+r"[1518-11-01 00:00] Guard #10 begins shift
 [1518-11-01 00:05] falls asleep
 [1518-11-01 00:25] wakes up
 [1518-11-01 00:30] falls asleep
@@ -267,7 +232,7 @@ mod tests {
 [1518-11-05 00:03] Guard #99 begins shift
 [1518-11-05 00:45] falls asleep
 [1518-11-05 00:55] wakes up";
-        let input = read_input_str(c);
+        let input = pre_process(c);
         assert_eq!(exercise_2(input), 4455);
     }
 
@@ -277,9 +242,7 @@ mod tests {
     }
 
     #[test]
-    fn d4_ex2_s3() {
-        let v = vec!(3, 1, 4, 2);
-        println!("{:?}", v.iter().enumerate().max());
+    fn d4_ex2_s3() {        
     }
 
     #[bench]
@@ -289,11 +252,11 @@ mod tests {
 
     #[bench]
     fn d4_ex1_bench(b: &mut Bencher) {
-        
+        b.iter(|| exercise_1(read_input()));
     }
 
     #[bench]
     fn d4_ex2_bench(b: &mut Bencher) {
-       
+       b.iter(|| exercise_2(read_input()));
     }
 }
