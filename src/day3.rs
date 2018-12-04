@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::num::ParseIntError;
-use regex::Regex;
 
 #[derive(Debug, Clone)]
 struct Area {
@@ -28,15 +27,19 @@ impl FromStr for Area {
     type Err = ParseIntError;    
 
     fn from_str(source: &str) -> Result<Self, Self::Err> {
-        let re: Regex = Regex::new(r"#(\d+) @ (\d+),(\d+): (\d+)x(\d+)").unwrap();
-        let caps = re.captures(source).unwrap();
+        
+        let parts: Vec<&str> = source.split(' ').collect();
+        let id = parts[0].replace('#', "").parse::<i32>().unwrap();
+        let loc: Vec<i32> = parts[2].replace(':', "").split(',').map(|n| n.parse().unwrap()).collect();
+        let size: Vec<i32> = parts[3].split('x').map(|n| n.parse().unwrap()).collect();
+        
         Ok(Area::new(
-            caps.get(1).unwrap().as_str().parse::<i32>().unwrap(),
-            caps.get(2).unwrap().as_str().parse::<i32>().unwrap(),
-            caps.get(3).unwrap().as_str().parse::<i32>().unwrap(),
-            caps.get(4).unwrap().as_str().parse::<i32>().unwrap(),
-            caps.get(5).unwrap().as_str().parse::<i32>().unwrap())
-        )
+            id,
+            loc[0],
+            loc[1],
+            size[0],
+            size[1]
+        ))
     }
 }
 
