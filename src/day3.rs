@@ -1,5 +1,7 @@
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use std::collections::BTreeSet;
+
 use std::str::FromStr;
 use std::num::ParseIntError;
 
@@ -72,8 +74,6 @@ impl<'a> std::cmp::PartialOrd for SweepEvent<'a> {
     }
 }
 
-
-
 impl<'a> std::cmp::PartialEq for SweepEvent<'a> {
 
     fn eq(&self, other: &Self) -> bool {
@@ -89,6 +89,53 @@ impl<'a> std::cmp::PartialEq for SweepEvent<'a> {
         sy == oy
     }
 }
+
+#[derive(Eq, PartialEq)]
+enum HorizontalSwipe {
+    Start(i32),
+    End(i32)
+}
+
+impl std::cmp::Ord for HorizontalSwipe {
+
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let sy = match self {
+            HorizontalSwipe::Start(y) => y,
+            HorizontalSwipe::End(y) => y
+        };
+        let oy = match self {
+            HorizontalSwipe::Start(y) => y,
+            HorizontalSwipe::End(y) => y
+        };
+
+        sy.cmp(oy)
+    }
+}
+
+
+impl std::cmp::PartialOrd for HorizontalSwipe {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/*
+impl std::cmp::PartialEq for HorizontalSwipe {
+
+    fn eq(&self, other: &Self) -> bool {
+        let sy = match self {
+            HorizontalSwipe::Start(y) => y,
+            HorizontalSwipe::End(y) => y
+        };
+        let oy = match self {
+            HorizontalSwipe::Start(y) => y,
+            HorizontalSwipe::End(y) => y
+        };
+
+        sy == oy
+    }
+}*/
+
 
 pub fn execute_exercises() {        
     println!("Overlapping inches: {}", exercise_1(read_input()));
@@ -111,26 +158,29 @@ fn exercise_1_sl(input: Vec<Area>) -> i32 {
     let mut minutes = 0i32;
     let mut previous_y = 0;
     let mut previous_overlapped = 0;
-    let mut state = 0; // Should be some ordered lists of
+    let mut state: BTreeSet<HorizontalSwipe> = BTreeSet::new(); // Should be some ordered lists of
 
     min_heap.iter().fold((0i32, 0i32, 0i32), |(prev_y, prev_overlap, result), event| {
         match event {
             SweepEvent::StartArea(b, y) => {
                 let n_result = result + (y - previous_y) * previous_overlapped; // Increment minutes with overlapped
                 // Add x and x+width to state.
+                state.insert(HorizontalSwipe::Start(b.x));
+                state.insert(HorizontalSwipe::End(b.x + b.width));
                 // Calculate overlapping
                 let overlapped = 0;
                 (*y, overlapped, n_result)
             },
             SweepEvent::EndArea(b, y) => {
                 let n_result = result + (y - previous_y) * previous_overlapped; // Increment minutes with overlapped
-                // Add x and x+width to state.
+                // Remove x and x+width to state.
+                state.remove(&HorizontalSwipe::Start(b.x));
+                state.remove(&HorizontalSwipe::End(b.x + b.width));
                 // Calculate overlapping
                 let overlapped = 0;
                 (*y, overlapped, n_result)
             }
-        }
-        
+        }        
     }).2
 }
 
@@ -147,17 +197,6 @@ fn exercise_1(input: Vec<Area>) -> i32 {
     });
 
     hmm.values().filter(|x| **x > 1).count() as i32
-
-    // What about translating the 2d space to a 1d space and then using a sweep algorithm from left to right?
-
-    // What about using this sweep algorithm immediatly? from top to bottom.
-    // the events would be the start of a rectangle and the end of a rectangle.
-    // There can be a bookkeeping of which rectangle has not overlapped
-    /* resources:
-        events: https://doc.rust-lang.org/std/collections/binary_heap/
-        store it in a ordered list maybe? so that a sweep in 1D can be done in O(k) where k is the amount of areas on a line.
-    */
-
 }
 
 fn exercise_2(input: Vec<Area>) -> i32 {
