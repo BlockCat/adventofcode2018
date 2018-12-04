@@ -1,8 +1,9 @@
+use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::num::ParseIntError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct Area {
     id: i32,
     x: i32,
@@ -43,6 +44,52 @@ impl FromStr for Area {
     }
 }
 
+#[derive(Eq)]
+enum SweepEvent<'a> {
+    StartArea(&'a Area, i32),
+    EndArea(&'a Area, i32)
+}
+
+impl<'a> std::cmp::Ord for SweepEvent<'a> {
+
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let sy = match self {
+            SweepEvent::StartArea(_, y) => y,
+            SweepEvent::EndArea(_, y) => y
+        };
+        let oy = match other {
+            SweepEvent::StartArea(_, y) => y,
+            SweepEvent::EndArea(_, y) => y
+        };
+
+        sy.cmp(oy)
+    }
+}
+
+impl<'a> std::cmp::PartialOrd for SweepEvent<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+
+
+impl<'a> std::cmp::PartialEq for SweepEvent<'a> {
+
+    fn eq(&self, other: &Self) -> bool {
+        let sy = match self {
+            SweepEvent::StartArea(b, y) => (b, y),
+            SweepEvent::EndArea(b, y) => (b, y)
+        };
+        let oy = match other {
+            SweepEvent::StartArea(b, y) => (b, y),
+            SweepEvent::EndArea(b, y) => (b, y)
+        };
+
+        sy == oy
+    }
+}
+
 pub fn execute_exercises() {        
     println!("Overlapping inches: {}", exercise_1(read_input()));
     println!("Non overlapping: {}", exercise_2(read_input()));    
@@ -50,6 +97,41 @@ pub fn execute_exercises() {
 
 fn read_input() -> Vec<Area> {    
     include_str!("../input/day3_in.txt").lines().map(|l| l.parse::<Area>().unwrap()).collect()
+}
+
+fn exercise_1_sl(input: Vec<Area>) -> i32 {
+    
+    let event_vector: Vec<SweepEvent> = input.iter()
+        .map(|s| SweepEvent::StartArea(s, s.y))        
+        .chain(input.iter().map(|s| SweepEvent::EndArea(s, s.y + s.height)))
+        .collect();    
+
+    let min_heap = BinaryHeap::from(event_vector);
+
+    let mut minutes = 0i32;
+    let mut previous_y = 0;
+    let mut previous_overlapped = 0;
+    let mut state = 0; // Should be some ordered lists of
+
+    min_heap.iter().fold((0i32, 0i32, 0i32), |(prev_y, prev_overlap, result), event| {
+        match event {
+            SweepEvent::StartArea(b, y) => {
+                let n_result = result + (y - previous_y) * previous_overlapped; // Increment minutes with overlapped
+                // Add x and x+width to state.
+                // Calculate overlapping
+                let overlapped = 0;
+                (*y, overlapped, n_result)
+            },
+            SweepEvent::EndArea(b, y) => {
+                let n_result = result + (y - previous_y) * previous_overlapped; // Increment minutes with overlapped
+                // Add x and x+width to state.
+                // Calculate overlapping
+                let overlapped = 0;
+                (*y, overlapped, n_result)
+            }
+        }
+        
+    }).2
 }
 
 fn exercise_1(input: Vec<Area>) -> i32 {    
