@@ -1,12 +1,10 @@
-use std::collections::BinaryHeap;
-use std::collections::HashMap;
 use std::collections::BTreeSet;
 
 use std::str::FromStr;
 use std::num::ParseIntError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct Area {
+pub struct Area {
     id: i32,
     x: i32,
     y: i32,
@@ -46,94 +44,64 @@ impl FromStr for Area {
     }
 }
 
-#[derive(Eq, PartialEq, Debug)]
-enum SweepEvent<'a> {
-    StartArea(&'a Area, i32),
-    EndArea(&'a Area, i32)
-}
+mod sweepline {
+    use super::Area;
 
-impl<'a> std::cmp::Ord for SweepEvent<'a> {
-
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let sy = match self {
-            SweepEvent::StartArea(_, y) => y,
-            SweepEvent::EndArea(_, y) => y
-        };
-        let oy = match other {
-            SweepEvent::StartArea(_, y) => y,
-            SweepEvent::EndArea(_, y) => y
-        };
-
-        sy.cmp(oy)
+    #[derive(Eq, PartialEq, Debug)]
+    pub enum SweepEvent<'a> {
+        StartArea(&'a Area, i32),
+        EndArea(&'a Area, i32)
     }
-}
 
-impl<'a> std::cmp::PartialOrd for SweepEvent<'a> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
+    impl<'a> std::cmp::Ord for SweepEvent<'a> {
+
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            let sy = match self {
+                SweepEvent::StartArea(_, y) => y,
+                SweepEvent::EndArea(_, y) => y
+            };
+            let oy = match other {
+                SweepEvent::StartArea(_, y) => y,
+                SweepEvent::EndArea(_, y) => y
+            };
+
+            sy.cmp(oy)
+        }
     }
-}
-/*
-impl<'a> std::cmp::PartialEq for SweepEvent<'a> {
 
-    fn eq(&self, other: &Self) -> bool {
-        let sy = match self {
-            SweepEvent::StartArea(b, y) => (b, y),
-            SweepEvent::EndArea(b, y) => (b, y)
-        };
-        let oy = match other {
-            SweepEvent::StartArea(b, y) => (b, y),
-            SweepEvent::EndArea(b, y) => (b, y)
-        };
-
-        sy == oy
+    impl<'a> std::cmp::PartialOrd for SweepEvent<'a> {
+        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            Some(self.cmp(other))
+        }
     }
-}*/
 
-#[derive(Debug, Eq)]
-enum HorizontalSwipe {
-    Start(i32, i32),
-    End(i32, i32)
-}
-
-impl std::cmp::Ord for HorizontalSwipe {
-
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let sy = match self {
-            HorizontalSwipe::Start(id, y) => (y, 0, id),
-            HorizontalSwipe::End(id, y) => (y, 1, id)
-        };
-        let oy = match other {
-            HorizontalSwipe::Start(id, y) => (y, 0, id),
-            HorizontalSwipe::End(id, y) => (y, 1, id)
-        };
-
-        sy.cmp(&oy)
+    #[derive(Debug, PartialEq, PartialOrd, Eq)]
+    pub enum HorizontalSwipe {
+        Start(i32, i32),
+        End(i32, i32)
     }
-}
 
+    impl std::cmp::Ord for HorizontalSwipe {
 
-impl std::cmp::PartialOrd for HorizontalSwipe {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
+        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            let sy = match self {
+                HorizontalSwipe::Start(id, y) => (y, 0, id),
+                HorizontalSwipe::End(id, y) => (y, 1, id)
+            };
+            let oy = match other {
+                HorizontalSwipe::Start(id, y) => (y, 0, id),
+                HorizontalSwipe::End(id, y) => (y, 1, id)
+            };
 
-
-impl std::cmp::PartialEq for HorizontalSwipe {
-
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (HorizontalSwipe::Start(a, _), HorizontalSwipe::Start(b, _)) => a == b,
-            (HorizontalSwipe::End(a, _),HorizontalSwipe::End(b, _)) => a==b,
-            _ => false
+            sy.cmp(&oy)
         }
     }
 }
 
+use self::sweepline::*;
 
 pub fn execute_exercises() {        
-    println!("Overlapping inches: {}", exercise_1(read_input()));
+    println!("Overlapping inches: {}", exercise_1_sl(read_input()));
     println!("Non overlapping: {}", exercise_2(read_input()));    
 }
 
@@ -203,7 +171,7 @@ fn count_overlapped(line: &BTreeSet<HorizontalSwipe>) -> i32 {
     }).0
     
 }
-
+/*
 fn exercise_1(input: Vec<Area>) -> i32 {    
 
     // I feel horrible writing this
@@ -218,7 +186,7 @@ fn exercise_1(input: Vec<Area>) -> i32 {
 
     hmm.values().filter(|x| **x > 1).count() as i32
 }
-
+*/
 fn exercise_2(input: Vec<Area>) -> i32 {
     input.iter().find(|x| !input.iter().any(|y| x.intersects(y))).unwrap().id
 }
@@ -231,18 +199,18 @@ mod tests {
     #[test]
     fn d3_ex1_s1() {
         let inputs = vec!(Area::new(1, 1, 3, 4, 4), Area::new(2, 3, 1, 4, 4), Area::new(3, 5, 5, 2, 2));
-        assert_eq!(exercise_1(inputs), 4);
+        assert_eq!(exercise_1_sl(inputs), 4);
     }
     
     #[test]
     fn d3_ex1_s2() {
         let inputs = vec!(Area::new(1, 0, 0, 4, 4), Area::new(2, 3, 0, 4, 4), Area::new(3, 4, 4, 2, 2));
-        assert_eq!(exercise_1(inputs), 4);
+        assert_eq!(exercise_1_sl(inputs), 4);
     }
 
     #[test]
     fn d3_ex1_s3() {
-        assert_eq!(exercise_1(read_input()), 118322);
+        assert_eq!(exercise_1_sl(read_input()), 118322);
     }
 
     #[test]
@@ -271,11 +239,6 @@ mod tests {
     #[bench]
     fn d3_ex2_bench(b: &mut Bencher) {
         b.iter(|| exercise_2(read_input()));
-    }
-
-     #[bench]
-    fn d3_ex1_bench(b: &mut Bencher) {
-        b.iter(|| exercise_1(read_input()));
     }
 
     #[bench]
