@@ -156,21 +156,22 @@ fn exercise_1(input: Vec<(i32, i32, i32)>) -> i32 {
 
 fn exercise_2(input: Vec<(i32, i32, i32)>) -> i32 {    
 
-    let (guard, (minute, _)) = input.into_iter().fold(HashMap::with_capacity(200), |mut acc, (guard, sleep, wake)| {
+    let guard_minutes = input.into_iter().fold(HashMap::with_capacity(200), |mut acc, (guard, sleep, wake)| {
         let ref mut minutes = *acc.entry(guard).or_insert([0u8; 60]);
         for m in sleep..wake {
             minutes[m as usize] += 1;            
         }        
         
         acc
-    }).into_iter().map(|(guard, minutes)| {
-        // (guard, (minute, sleeps))
-        let c = minutes.into_iter()
+    });
+    
+    let (guard, (minute, _)) = guard_minutes.into_iter().map(|(guard, minutes)| {
+        // (guard, (minute, sleeps))        
+        (guard, minutes.into_iter()
             .enumerate()
             .max_by(|(_, a), (_, b)| a.cmp(b))
             .map(|(a, &b)| (a, b))
-            .unwrap();
-        (guard, c.clone())
+            .unwrap())
     }).max_by(|(_, (_, a)), (_, (_, b))| a.cmp(b))
     .unwrap();
 
