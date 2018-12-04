@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 mod preprocess {
     use std::str::FromStr;
-    use std::num::ParseIntError;
-    use regex::Regex;
+    use std::num::ParseIntError;    
 
     #[derive(Debug, Copy, Clone)]
     struct Date {
@@ -19,15 +18,13 @@ mod preprocess {
         type Err = ParseIntError;
 
         fn from_str(source: &str) -> Result<Self, Self::Err> {
-            let re: Regex = Regex::new(r"\[(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\]").unwrap();
-            let caps = re.captures(source).unwrap();
             Ok(Date {
-                year: caps.get(1).unwrap().as_str().parse::<i32>().unwrap(),
-                month: caps.get(2).unwrap().as_str().parse::<i32>().unwrap(),
-                day: caps.get(3).unwrap().as_str().parse::<i32>().unwrap(),
-                hour: caps.get(4).unwrap().as_str().parse::<i32>().unwrap(),
-                minute: caps.get(5).unwrap().as_str().parse::<i32>().unwrap()})
-            
+                year: source[1..5].parse().unwrap(),
+                month: source[6..8].parse().unwrap(),
+                day: source[9..11].parse().unwrap(),
+                hour: source[12..14].parse().unwrap(),
+                minute: source[15..17].parse().unwrap()
+            })            
         }
     }
 
@@ -46,10 +43,9 @@ mod preprocess {
             let significant_char = &source[19..20];       
 
             match significant_char {
-                "G" => {
-                    let re: Regex = Regex::new(r"#(\d+) ").unwrap();
-                    let caps = re.captures(source).unwrap();
-                    Ok(GuardEvent::StartShift(date, caps.get(1).unwrap().as_str().parse::<i32>().unwrap()))
+                "G" => {                    
+                    let guard = source[26..source.find(" b").unwrap()].parse().unwrap();
+                    Ok(GuardEvent::StartShift(date, guard))
                 },
                 "f" => Ok(GuardEvent::StartSleep(date)),
                 "w" => Ok(GuardEvent::EndSleep(date)),
@@ -244,6 +240,11 @@ r"[1518-11-01 00:00] Guard #10 begins shift
 
     #[test]
     fn d4_ex2_s3() {        
+    }
+
+    #[bench]
+    fn d4_preprocess(b: &mut Bencher) {
+        b.iter(|| super::preprocess::pre_process(include_str!("../input/day4_in.txt")));
     }
 
     #[bench]
