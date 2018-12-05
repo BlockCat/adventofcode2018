@@ -18,4 +18,7 @@ test day4::tests::d4_read         ... bench:      98,925 ns/iter (+/- 1,124)
 // Without improvement
 test day5::tests::d5_bench_ex1 ... bench:  19,436,470 ns/iter (+/- 1,987,872)
 test day5::tests::d5_bench_ex2 ... bench:  76,633,060 ns/iter (+/- 3,325,339)
+// With small improvement
+test day5::tests::d5_bench_ex1 ... bench:     224,975 ns/iter (+/- 57,992)
+test day5::tests::d5_bench_ex2 ... bench:   3,225,215 ns/iter (+/- 773,984)
 ```
