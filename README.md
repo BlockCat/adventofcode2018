@@ -21,4 +21,8 @@ test day5::tests::d5_bench_ex2 ... bench:  76,633,060 ns/iter (+/- 3,325,339)
 // With small improvement
 test day5::tests::d5_bench_ex1 ... bench:     224,975 ns/iter (+/- 57,992)
 test day5::tests::d5_bench_ex2 ... bench:   3,225,215 ns/iter (+/- 773,984)
+// With the lookback version of my algorithm that is way better readable.
+test day5::tests::d5_bench_ex1  ... bench:     179,878 ns/iter (+/- 10,498)
+test day5::tests::d5_bench_ex2  ... bench:   1,882,250 ns/iter (+/- 167,912)
+test day5::tests::d5_bench_read ... bench:       1,316 ns/iter (+/- 88)
 ```

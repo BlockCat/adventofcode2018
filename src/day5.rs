@@ -8,11 +8,9 @@ fn read_input() -> Vec<u8> {
     include_str!("../input/day5_in.txt").bytes().collect()
 }
 
-fn exercise_1(input: Vec<u8>) -> usize {
-    use std::collections::VecDeque;
-    let mut seen: Vec<u8> = Vec::with_capacity(input.len());
-    let mut unseen = VecDeque::from(input);
+fn exercise_1(input: impl IntoIterator<Item = u8>) -> usize {
     
+    // This old implementation can be found in https://github.com/BlockCat/adventofcode2018/commit/f1fc8bf07df0f1c84670eef352f2fc26b9ecbaee
     // Start: dequeue first char C from unseen 
     // ---- part 1 ----
     // dequeue next char D from unseen.
@@ -34,67 +32,48 @@ fn exercise_1(input: Vec<u8>) -> usize {
     //
     // ----= part 3 ---- There is nothing left in unseen queue
     // Add char D to seen stack and exit
+
     
-    let mut a = unseen.pop_front().unwrap();
-    let mut b: Option<u8> = None;  
+    // Other algorithm    
+    // Instead of looking forward, look backward.
+    // Oops, inspired [CryZe](https://gist.github.com/CryZe/0182994a72762e099034b706a8fadca3)
+    let mut seen: Vec<u8> = Vec::with_capacity(1000);
+    let mut prev = 0u8;
 
-    loop {
-        let bn = match b {
-            Some(b) => b,
-            None => match unseen.pop_front() {
-                Some(b) => b,                
-                None => break
-            }
-        };
-
-        let result = if a == bn + 32 || a == bn - 32 { // Check if oposite polarities,
-            // There are polarities, so drop a and b.
-            if seen.len() == 0 { 
-                // If there is no seen chars, just continue as usual from the start.                
-                match unseen.pop_front() { 
-                    Some(a) => (a, None),
-                    None => break
-                }
-            } else {
-                // There are seen chars, take this one
-                (seen.pop().unwrap(), unseen.pop_front())
-            }
+    for current in input {
+        if current ^ 0x20 == prev {
+            seen.pop();
+            prev = seen.last().cloned().unwrap_or_default();
         } else {
-            seen.push(a);            
-            (bn, None)
-        };
-
-        a = result.0;
-        b = result.1;
-
-
+            prev = current;
+            seen.push(prev);
+        }
     }
 
-    seen.push(a);
     seen.len()
 }
 
 
 fn exercise_2(input: Vec<u8>) -> usize {
     use std::thread;
-    
+    use std::sync::Arc;
+
     let lower_case: Vec<u8> = "abcdefghijklmnopqrstuvwxyz".bytes().collect();
     let upper_case: Vec<u8> = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".bytes().collect();
-    
-    // Uhm, if you remove chars and then collapse, isn't it the same as collapsing then removing chars?
-    // nope, when removing c/C from aCA then collapsing gives: []
-    // collapsing then removing c/C gives [aA]
 
-    let children: Vec<thread::JoinHandle<usize>> = (0..26).into_iter().map(|i| {
-        let l = lower_case[i];
-        let u = upper_case[i];
-        let next: Vec<u8> = input.iter().filter(|x| **x != l && **x != u).cloned().collect();
-        thread::spawn(move || {            
-            exercise_1(next)
+    let input = Arc::new(input);
+    let children: Vec<thread::JoinHandle<usize>> = (0..26).into_iter().map(|i| {                
+        thread::spawn({
+            let l = lower_case[i];
+            let u = upper_case[i];
+            let input = Arc::clone(&input);
+            move || {
+                exercise_1(input.iter().cloned().filter(|&x| x != l && x != u))    
+            }
         })
     }).collect();
 
-    children.into_iter().map(|x| x.join().unwrap()).min().unwrap()
+    children.into_iter().map(|t| t.join().unwrap()).min().unwrap()
 }
 
 #[cfg(test)]
@@ -105,8 +84,7 @@ mod tests {
 
     #[test]
     fn d5_ex1_s1() {
-        let input = "dabAcCaCBAcCcaDA".bytes().collect();
-        assert_eq!(exercise_1(input), 10);        
+        assert_eq!(exercise_1("dabAcCaCBAcCcaDA".bytes()), 10);        
     }
     
     #[test]
