@@ -15,32 +15,6 @@ fn read_input() -> Vec<(i32, i32)> {
     }).collect()
 }
 
-fn find_extreme_points(input: &Vec<(i32, i32)>) -> HashSet<(i32, i32)> {
-    
-    let mut extremes = HashSet::with_capacity(10);
-
-    for i in 0..(input.len() - 1) {
-        for j in (i+1)..input.len() {
-            let (ax, ay) = input[i];
-            let (bx, by) = input[j];
-            let left = input.iter().map(|(x, y)| {
-                ((x - ax)*(by-ay) - (y - ay)*(bx-ax)).signum()
-            }).any(|x| x > 0);
-            let right = input.iter().map(|(x, y)| {
-                ((x - ax)*(by-ay) - (y - ay)*(bx-ax)).signum()
-            }).any(|x| x < 0);
-
-            if !left || !right {
-                extremes.insert((ax, ay));
-                extremes.insert((bx, by));
-            }
-        }
-    }
-
-    extremes
-}
-
-
 fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     use std::collections::HashMap;
 
@@ -48,20 +22,19 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     let mut r = input[0].0;
     let mut u = input[0].1;
     let mut b = input[0].1;//Finding the bounding box
-    let extremes = find_extreme_points(&input);
 
     for (x, y) in input.iter() {
         l = std::cmp::min(l, *x);
         r = std::cmp::max(r, *x);
         u = std::cmp::min(u, *y);
         b = std::cmp::max(b, *y);
-    }
+    }    
     
     let mut map = HashMap::with_capacity(1000);
     let mut bookkeeping = HashMap::with_capacity(1000);
 
-    for x in l..(r+1) {
-        for y in u..(b+1) {
+    for x in (l-1)..(r+2) {
+        for y in (u-1)..(b+2) {
             let entry = map.entry((x, y)).or_insert(1000000);                 
             let book = bookkeeping.entry((x, y)).or_insert(None);
             input.iter().for_each(|(a, b)| {
@@ -77,6 +50,32 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
         }
     }
 
+    let mut extremes = HashSet::with_capacity(100);
+    for x in (l-1)..(r+2) {
+        let ay = u - 1;
+        let by = b + 1;
+        match bookkeeping.get(&(x as i32, ay as i32)).unwrap() {
+            Some(pos) => extremes.insert(pos),
+            None => false
+        };
+        match bookkeeping.get(&(x as i32, by as i32)).unwrap() {
+            Some(pos) => extremes.insert(pos),
+            None => false
+        };
+    }
+
+    for y in (u-1)..(b+2) {
+        let ax = l - 1;
+        let bx = r + 1;
+        match bookkeeping.get(&(ax as i32, y as i32)).unwrap() {
+            Some(pos) => extremes.insert(pos),
+            None => false
+        };
+        match bookkeeping.get(&(bx as i32, y as i32)).unwrap() {
+            Some(pos) => extremes.insert(pos),
+            None => false
+        };
+    }
     let mut counter = HashMap::with_capacity(1000);
         
 
@@ -99,8 +98,6 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     
     *counter.values().max().unwrap() as i32
 }
-
-
 
 fn exercise_2(input: Vec<(i32, i32)>, size: i32) -> i32 {
     use std::collections::HashMap;
