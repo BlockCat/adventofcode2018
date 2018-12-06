@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub fn execute_exercises() {
     //preprocess::pre_process(include_str!("../input/day4_in.txt")).into_iter().for_each(|(guard, sleep, wake)| println!("{} {} {}", guard, sleep, wake));
     //println!("Largest area: {}", exercise_1(read_input()));
@@ -13,8 +15,27 @@ fn read_input() -> Vec<(i32, i32)> {
     }).collect()
 }
 
-fn find_extreme_points(input: &Vec<(i32, i32)>) -> Vec<(i32, i32)> {
-    let extremes = Vec::new();
+fn find_extreme_points(input: &Vec<(i32, i32)>) -> HashSet<(i32, i32)> {
+    
+    let mut extremes = HashSet::with_capacity(10);
+
+    for i in 0..(input.len() - 1) {
+        for j in (i+1)..input.len() {
+            let (ax, ay) = input[i];
+            let (bx, by) = input[j];
+            let left = input.iter().map(|(x, y)| {
+                ((x - ax)*(by-ay) - (y - ay)*(bx-ax)).signum()
+            }).any(|x| x > 0);
+            let right = input.iter().map(|(x, y)| {
+                ((x - ax)*(by-ay) - (y - ay)*(bx-ax)).signum()
+            }).any(|x| x < 0);
+
+            if !left || !right {
+                extremes.insert((ax, ay));
+                extremes.insert((bx, by));
+            }
+        }
+    }
 
     extremes
 }
@@ -27,6 +48,7 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     let mut r = input[0].0;
     let mut u = input[0].1;
     let mut b = input[0].1;//Finding the bounding box
+    let extremes = find_extreme_points(&input);
 
     for (x, y) in input.iter() {
         l = std::cmp::min(l, *x);
@@ -38,16 +60,16 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     let mut map = HashMap::with_capacity(1000);
     let mut bookkeeping = HashMap::with_capacity(1000);
 
-    for x in (l-(b-u + 1))..(r+(b-u+1)) {
-        for y in (u-(r-l+1))..(b+(r-l+1)) {
+    for x in l..(r+1) {
+        for y in u..(b+1) {
             let entry = map.entry((x, y)).or_insert(1000000);                 
             let book = bookkeeping.entry((x, y)).or_insert(None);
-            input.iter().enumerate().for_each(|(i, (a, b))| {
+            input.iter().for_each(|(a, b)| {
                 let d = (a - x).abs() + (b - y).abs();                
 
                 if d < *entry {
                     *entry = d;                    
-                    *book = Some(i);
+                    *book = Some((*a, *b));
                 } else if d == *entry {                    
                     *book = None;
                 }
@@ -56,16 +78,24 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     }
 
     let mut counter = HashMap::with_capacity(1000);
-    bookkeeping.values().filter_map(|i| *i).for_each(|i| {
+        
+
+    bookkeeping.values().filter_map(|i| {
+            match *i {
+                None => None,
+                Some(pos) => {
+                    if extremes.contains(&pos) {
+                        None
+                    } else {
+                        Some(pos)
+                    }
+                }
+            }
+        }).for_each(|i| {
         *counter.entry(i).or_insert(0) += 1;
     });
 
-    // hack to jus get it over with
-
-    counter = counter.into_iter().filter(|(i, v)| {
-        *v < 4628
-    }).collect();
-    println!("{:?}", counter); 
+    println!("{:?}", extremes);
     
     *counter.values().max().unwrap() as i32
 }
@@ -146,4 +176,9 @@ mod tests {
 
         assert_eq!(exercise_2(input, 32), 16);
     }   
+
+    #[test]
+    fn d6_ex2_s2() {
+        assert_eq!(exercise_2(read_input(), 10_000), 45909);
+    }
 }
