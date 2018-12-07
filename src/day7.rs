@@ -1,25 +1,8 @@
+#![feature(const_fn)]
 use std::collections::BinaryHeap;
-use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::cell::RefCell;
 
-pub fn execute_exercises() {
-    println!("Order: {}", exercise_1(read_input()));
-    println!("parallel time: {}", exercise_2(read_input(), 5, 60));
-}
-
-fn read_input() -> Vec<(char, char)> {
-    parse_input(include_str!("../input/day7_in.txt"))
-}
-
-fn parse_input(input: &str) -> Vec<(char, char)> {
-    input.lines().map(|l| {
-        let a = l[5..6].chars().next().unwrap();
-        let b = l[36..37].chars().next().unwrap();
-
-        (a, b)
-    }).collect::<Vec<(char, char)>>()
-}
 
 #[derive(Eq, PartialEq)]
 struct Node {
@@ -40,24 +23,36 @@ impl std::cmp::PartialOrd for Node {
     }
 }
 
-fn create_precendence_graph(input: Vec<(char, char)>) -> HashMap<char, Node> {
-    let mut precendence_graph = HashMap::new();
+pub fn execute_exercises() {
+    println!("Order: {}", exercise_1(read_input()));
+    println!("parallel time: {}", exercise_2(read_input(), 5, 60));
+}
 
-    for (prec, todo) in input.iter() {        
-        precendence_graph.entry(*prec)
-            .and_modify(|node: &mut Node| node.next.push(*todo))
-            .or_insert(Node {
-                value: *prec,
-                constrained: RefCell::new(0),
-                next: vec!(*todo)
-            });
-        precendence_graph.entry(*todo)
-            .and_modify(|node| *node.constrained.get_mut() += 1)
-            .or_insert(Node {
-                value: *todo,
-                constrained: RefCell::new(1),
-                next: vec!()
-            });        
+fn read_input() -> Vec<(char, char)> {
+    parse_input(include_str!("../input/day7_in.txt"))
+}
+
+fn parse_input(input: &str) -> Vec<(char, char)> {
+    input.lines().map(|l| {
+        let a = l[5..6].chars().next().unwrap();
+        let b = l[36..37].chars().next().unwrap();
+
+        (a, b)
+    }).collect::<Vec<(char, char)>>()
+}
+
+
+fn create_precendence_graph(input: Vec<(char, char)>) -> Vec<Node> {
+    let mut precendence_graph: Vec<Node> = (b'A'..b'Z'+1).into_iter().map(|a| Node {
+        value: a as char,
+        constrained: RefCell::new(0),
+        next: Vec::with_capacity(20)
+    }).collect();
+
+    let offset = b'A';    
+    for (prec, todo) in input.into_iter().map(|(a, b)| (a as u8, b as u8)) {  
+        precendence_graph[(prec - offset) as usize].next.push(todo as char);
+        *precendence_graph[(todo - offset) as usize].constrained.get_mut() += 1; 
     }
 
     precendence_graph
@@ -69,14 +64,14 @@ fn exercise_1(input: Vec<(char, char)>) -> String {
     let precendence_graph = create_precendence_graph(input);
 
     let mut seen = Vec::with_capacity(20);
-    let mut heap = BinaryHeap::from_iter(precendence_graph.values().filter(|node| *node.constrained.borrow() == 0));
-    
+    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && node.next.len() > 0));
+    let offset = b'A' as usize;
 
     while !heap.is_empty() {
         let node = heap.pop().unwrap();
         seen.push(node.value);
         heap.extend(node.next.iter()
-            .map(|n| &precendence_graph[n])
+            .map(|n| &precendence_graph[*n as usize - offset])
             .inspect(|n| *n.constrained.borrow_mut() -= 1)
             .filter(|n| *n.constrained.borrow() == 0));            
     }
@@ -86,20 +81,18 @@ fn exercise_1(input: Vec<(char, char)>) -> String {
 
 fn exercise_2(input: Vec<(char, char)>, workers: usize, seconds_per_step: i32) -> i32 {
     let precendence_graph = create_precendence_graph(input);
-    
-    let mut working: Vec<bool> = (0..workers).map(|_| false).collect();
+    let offset = b'A' as usize;
 
-    let mut heap = BinaryHeap::from_iter(precendence_graph.values().filter(|node| *node.constrained.borrow() == 0));    
-    let mut time = 0;
+    let mut working: Vec<bool> = (0..workers).map(|_| false).collect();
+    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && node.next.len() > 0));
+    let mut time = 0;    
     let mut event_heap = BinaryHeap::new();
     
-    for worker in 0..workers+1 { // Take initial jobs
-        if !heap.is_empty() {
+    for (worker, ref mut working) in working.iter_mut().enumerate().take(heap.len()) { // Take initial jobs        
             let node = heap.pop().unwrap();
             let time = seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
             event_heap.push((-time, worker, node));
-            working[worker] = true;            
-        }
+            **working = true;        
     }
 
     while !event_heap.is_empty() {
@@ -108,21 +101,18 @@ fn exercise_2(input: Vec<(char, char)>, workers: usize, seconds_per_step: i32) -
         working[worker] = false;
         
         heap.extend(node.next.iter()
-            .map(|n| &precendence_graph[n])
+            .map(|n| &precendence_graph[*n as usize - offset])
             .inspect(|n| *n.constrained.borrow_mut() -= 1)
             .filter(|n| *n.constrained.borrow() == 0));
 
-        
-        let c = working.iter().enumerate().filter(|(_, is_working)| !**is_working).map(|(a, b)| (a, *b)).collect::<Vec<(usize, bool)>>();
-        for (free_worker, _) in c {
+        for (free_worker, ref mut working) in working.iter_mut().enumerate().filter(|(_, is_working)| !**is_working) {
             if !heap.is_empty() {
                 let node = heap.pop().unwrap();
                 let time = time + seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
                 event_heap.push((-time, free_worker, node));
-                working[free_worker as usize] = true;
+                **working = true;
             }
-        }
-        
+        }        
     }
 
     time
@@ -164,12 +154,17 @@ Step F must be finished before step E can begin.";
 
     #[test]
     fn d7_ex2_s2() {
-        assert_eq!(exercise_2(read_input(), 5, 60), 1265);
+        assert_eq!(exercise_2(read_input(), 4, 60), 1265);
     }
 
     #[bench]
     fn d7_bench_read(b: &mut Bencher) {
         b.iter(|| read_input());
+    }
+
+    #[bench]
+    fn d7_bench_prec(b: &mut Bencher) {
+        b.iter(|| create_precendence_graph(read_input()));
     }
 
 

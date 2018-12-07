@@ -55,7 +55,7 @@ mod tests {
     use crate::test::Bencher;
 
     #[test]
-    fn ex1_s1() {
+    fn d2_ex1_s1() {
         assert_eq!(check_id("abcdef".to_string()), PartialCheckSum { is_double: false, is_triple: false});
         assert_eq!(check_id("bababc".to_string()), PartialCheckSum { is_double: true, is_triple: true});
         assert_eq!(check_id("abbcde".to_string()), PartialCheckSum { is_double: true, is_triple: false});
@@ -66,33 +66,33 @@ mod tests {
     }
 
     #[test]
-    fn ex1_s2() {
+    fn d2_ex1_s2() {
         let v = vec!("abcdef", "bababc", "abbcde", "abcccd", "aabcdd", "abcdee", "ababab").into_iter().map(|t| t.to_string()).collect();
         assert_eq!(exercise_1(v), 12);
     }
 
     #[test]
-    fn ex2_s1() {
+    fn d2_ex2_s1() {
         let v: Vec<String> = vec!("abcde","fghij","klmno","pqrst","fguij","axcye","wvxyz").into_iter().map(|t| t.to_string()).collect();
         assert_eq!(exercise_2(v), String::from("fgij"));
     }
 
     #[bench]
-    fn bench_read(b: &mut Bencher) {
+    fn d2_bench_read(b: &mut Bencher) {
         b.iter(|| {
             read_input();
         });
     }
 
     #[bench]
-    fn bench_p1(b: &mut Bencher) {
+    fn d2_bench_ex1(b: &mut Bencher) {
         b.iter(|| {
             exercise_1(read_input());
         });
     }
 
     #[bench]
-    fn bench_p2(b: &mut Bencher) {
+    fn d2_bench_ex2(b: &mut Bencher) {
         b.iter(|| {
             exercise_2(read_input());
         });

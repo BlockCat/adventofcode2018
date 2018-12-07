@@ -35,63 +35,63 @@ mod tests {
     use crate::test::Bencher;
 
     #[test]
-     fn ex1_s1() {        
+     fn d1_ex1_s1() {        
         assert_eq!(exercise_1(vec![1, 1, 1]), 3);
     }
 
     #[test]
-    fn ex1_s2() {        
+    fn d1_ex1_s2() {        
         assert_eq!(exercise_1(vec![1, 1, -2]), 0);
     }
 
     #[test]
-    fn ex1_s3() {
+    fn d1_ex1_s3() {
         assert_eq!(exercise_1(vec![-1, -2, -3]), -6);
     }
     
     #[test]
-    fn ex2_s1() {
+    fn d1_ex2_s1() {
         assert_eq!(exercise_2(vec![1, -2, 3, 1]), 2);
     }
 
     #[test]
-    fn ex2_s2() {
+    fn d1_ex2_s2() {
         assert_eq!(exercise_2(vec![1, -1]), 0);
     }
 
     #[test]
-    fn ex2_s3() {
+    fn d1_ex2_s3() {
         assert_eq!(exercise_2(vec![3, 3, 4, -2, -4]), 10);
     }
 
     #[test]
-    fn ex2_s4() {
+    fn d1_ex2_s4() {
         assert_eq!(exercise_2(vec![-6, 3, 8, 5, -6]), 5);
     }
 
     #[test]
-    fn ex2_s5() {
+    fn d1_ex2_s5() {
         assert_eq!(exercise_2(vec![7, 7, -2, -7, -4]), 14);
     }
 
     #[bench]
-    fn bench_reading(b: &mut Bencher) {
+    fn d1_bench_read(b: &mut Bencher) {
         b.iter(|| {
             frequency_delta_list();
         });
     }
 
     #[bench]
-    fn bench_ex2(b: &mut Bencher) {        
-        b.iter(|| {
-            exercise_2(frequency_delta_list());
-        });        
-    }
-
-    #[bench]
-    fn bench_ex1(b: &mut Bencher) {        
+    fn d1_bench_ex1(b: &mut Bencher) {        
         b.iter(|| {
             exercise_1(frequency_delta_list());
+        });        
+    }
+    
+    #[bench]
+    fn d1_bench_ex2(b: &mut Bencher) {        
+        b.iter(|| {
+            exercise_2(frequency_delta_list());
         });        
     }
 

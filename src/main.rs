@@ -1,6 +1,7 @@
+#![feature(const_fn)]
 #![feature(test)]
 extern crate test;
-extern crate regex;
+
 
 /*mod day1;
 mod day2;
