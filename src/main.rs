@@ -8,6 +8,7 @@ mod day3;
 mod day4;
 mod day5;*/
 mod day6;
+mod day7;
 
 fn main() {
     /*day1::execute_exercises();
@@ -15,6 +16,6 @@ fn main() {
     day3::execute_exercises();
     day4::execute_exercises();*/
     //day5::execute_exercises();
-    day6::execute_exercises();
+    day7::execute_exercises();
     
 }

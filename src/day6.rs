@@ -178,4 +178,14 @@ mod tests {
     fn d6_ex2_s2() {
         assert_eq!(exercise_2(read_input(), 10_000), 45909);
     }
+
+    #[bench]
+    fn d6_bench_ex1(b: &mut Bencher) {
+        b.iter(|| exercise_1(read_input()));
+    }
+
+    #[bench]
+    fn d6_bench_ex2(b: &mut Bencher) {
+        b.iter(|| exercise_2(read_input(), 10_000));
+    }
 }
