@@ -1,3 +1,7 @@
+use std::collections::BinaryHeap;
+use std::collections::HashMap;
+use std::iter::FromIterator;
+use std::cell::RefCell;
 
 pub fn execute_exercises() {
     println!("Order: {}", exercise_1(read_input()));
@@ -20,6 +24,7 @@ fn parse_input(input: &str) -> Vec<(char, char)> {
 #[derive(Eq, PartialEq)]
 struct Node {
     value: char,
+    constrained: RefCell<i32>,
     next: Vec<char>
 }
 
@@ -35,113 +40,85 @@ impl std::cmp::PartialOrd for Node {
     }
 }
 
-
-fn exercise_1(input: Vec<(char, char)>) -> String {
-    use std::collections::BinaryHeap;
-    use std::collections::HashMap;
-
-    let mut steps: Vec<Node> = (b'A'..(b'Z'+1)).map(|c| {
-        Node {
-            value: c as char,
-            next: vec!()
-        }
-    }).collect();
-
-    let mut constraints = HashMap::new();
+fn create_precendence_graph(input: Vec<(char, char)>) -> HashMap<char, Node> {
+    let mut precendence_graph = HashMap::new();
 
     for (prec, todo) in input.iter() {        
-        steps[(*prec as u8 - b'A')  as usize].next.push(*todo);
-        constraints.entry(*prec).or_insert(0);
-        let cons = constraints.entry(*todo).or_insert(0);
-        *cons += 1;        
-        //constraints[(*todo as u8- b'A') as usize] += 1;
+        precendence_graph.entry(*prec)
+            .and_modify(|node: &mut Node| node.next.push(*todo))
+            .or_insert(Node {
+                value: *prec,
+                constrained: RefCell::new(0),
+                next: vec!(*todo)
+            });
+        precendence_graph.entry(*todo)
+            .and_modify(|node| *node.constrained.get_mut() += 1)
+            .or_insert(Node {
+                value: *todo,
+                constrained: RefCell::new(1),
+                next: vec!()
+            });        
     }
 
-    let mut seen = vec!();
-    let mut heap = BinaryHeap::new();
-    // Find all chars that have no constraints
-    for (i, c) in constraints.iter().filter(|(_, c)| **c == 0) {        
-        heap.push(&steps[(*i as u8 - b'A') as usize]);
-    }
+    precendence_graph
+}
+
+
+fn exercise_1(input: Vec<(char, char)>) -> String {
+
+    let precendence_graph = create_precendence_graph(input);
+
+    let mut seen = Vec::with_capacity(20);
+    let mut heap = BinaryHeap::from_iter(precendence_graph.values().filter(|node| *node.constrained.borrow() == 0));
+    
 
     while !heap.is_empty() {
         let node = heap.pop().unwrap();
         seen.push(node.value);
-        for next_node in node.next.iter() {
-            //constraints[((*next_node as u8) - b'A') as usize] -= 1;
-            let precs = constraints.entry(*next_node).or_insert(0);
-            //let precs = constraints[((*next_node as u8) - b'A') as usize];
-            *precs -= 1;
-            if *precs == 0 {
-                heap.push(&steps[(*next_node as u8 - b'A')  as usize]);
-            }
-        }
+        heap.extend(node.next.iter()
+            .map(|n| &precendence_graph[n])
+            .inspect(|n| *n.constrained.borrow_mut() -= 1)
+            .filter(|n| *n.constrained.borrow() == 0));            
     }
 
     seen.iter().collect::<String>()
 }
 
-fn exercise_2(input: Vec<(char, char)>, workers: u8, seconds_per_step: i32) -> i32 {
-    use std::collections::BinaryHeap;
-    use std::collections::HashMap;
-
-    let mut steps: Vec<Node> = (b'A'..(b'Z'+1)).map(|c| {
-        Node {
-            value: c as char,
-            next: vec!()
-        }
-    }).collect();
-
-    let mut constraints = HashMap::new();
-
-    for (prec, todo) in input.iter() {        
-        steps[(*prec as u8 - b'A')  as usize].next.push(*todo);
-        constraints.entry(*prec).or_insert(0);
-        let cons = constraints.entry(*todo).or_insert(0);
-        *cons += 1;        
-        //constraints[(*todo as u8- b'A') as usize] += 1;
-    }
+fn exercise_2(input: Vec<(char, char)>, workers: usize, seconds_per_step: i32) -> i32 {
+    let precendence_graph = create_precendence_graph(input);
     
-    let mut heap = BinaryHeap::new();
-    // Find all chars that have no constraints
-    for (i, _) in constraints.iter().filter(|(_, c)| **c == 0) {        
-        heap.push(&steps[(*i as u8 - b'A') as usize]);
-    }
+    let mut working: Vec<bool> = (0..workers).map(|_| false).collect();
 
-    let mut event_heap = BinaryHeap::new();
-    let mut working: Vec<bool> = (0..workers).map(|x| false).collect();
+    let mut heap = BinaryHeap::from_iter(precendence_graph.values().filter(|node| *node.constrained.borrow() == 0));    
     let mut time = 0;
-    for worker in 0..workers { // Take initial jobs
+    let mut event_heap = BinaryHeap::new();
+    
+    for worker in 0..workers+1 { // Take initial jobs
         if !heap.is_empty() {
             let node = heap.pop().unwrap();
             let time = seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
             event_heap.push((-time, worker, node));
-            working[worker as usize] = true;
-            println!("t: {}, w:{}", time, worker);
+            working[worker] = true;            
         }
     }
 
     while !event_heap.is_empty() {
         let (t, worker, node) = event_heap.pop().unwrap();
-        time = -t; //We don't have min heaps
-        println!("{}", time);
+        time = -t; //We don't have min heaps        
+        working[worker] = false;
+        
+        heap.extend(node.next.iter()
+            .map(|n| &precendence_graph[n])
+            .inspect(|n| *n.constrained.borrow_mut() -= 1)
+            .filter(|n| *n.constrained.borrow() == 0));
 
-        for next_node in node.next.iter() {        
-            let precs = constraints.entry(*next_node).or_insert(0);        
-            *precs -= 1;
-
-            if *precs == 0 {
-                heap.push(&steps[(*next_node as u8 - b'A')  as usize]);
-            }
-        }
-
-        working[worker as usize] = false;        
+        
         let c = working.iter().enumerate().filter(|(_, is_working)| !**is_working).map(|(a, b)| (a, *b)).collect::<Vec<(usize, bool)>>();
         for (free_worker, _) in c {
             if !heap.is_empty() {
                 let node = heap.pop().unwrap();
                 let time = time + seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
-                event_heap.push((-time, free_worker as u8, node));
+                event_heap.push((-time, free_worker, node));
                 working[free_worker as usize] = true;
             }
         }
