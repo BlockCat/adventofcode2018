@@ -29,18 +29,21 @@ impl FromStr for Area {
 
     fn from_str(source: &str) -> Result<Self, Self::Err> {
         
-        let parts: Vec<&str> = source.split(' ').collect();
-        let id = parts[0].replace('#', "").parse::<i32>().unwrap();
+        //let parts: Vec<&str> = source.split(' ').collect();
+        /*let id = parts[0].replace('#', "").parse::<i32>()?;
         let loc: Vec<i32> = parts[2].replace(':', "").split(',').map(|n| n.parse().unwrap()).collect();
-        let size: Vec<i32> = parts[3].split('x').map(|n| n.parse().unwrap()).collect();
+        let size: Vec<i32> = parts[3].split('x').map(|n| n.parse().unwrap()).collect();*/
+        let id = source[0..4].parse()?;
+        let (x, y) = (source[5..9].parse()?, source[10..14].parse()?);
+        let (w, h) = (source[15..19].parse()?, source[20..24].parse()?);
         
         Ok(Area::new(
             id,
-            loc[0],
-            loc[1],
-            size[0],
-            size[1]
-        ))
+            x,
+            y,
+            w,
+            h
+        ))        
     }
 }
 
@@ -106,7 +109,7 @@ pub fn execute_exercises() {
 }
 
 fn read_input() -> Vec<Area> {    
-    include_str!("../input/day3_in.txt").lines().map(|l| l.parse::<Area>().unwrap()).collect()
+    include_str!("../input/day3_preprocessed.txt").lines().map(|l| l.parse::<Area>().unwrap()).collect()
 }
 
 fn exercise_1_sl(input: Vec<Area>) -> i32 {
@@ -171,22 +174,7 @@ fn count_overlapped(line: &BTreeSet<HorizontalSwipe>) -> i32 {
     }).0
     
 }
-/*
-fn exercise_1(input: Vec<Area>) -> i32 {    
 
-    // I feel horrible writing this
-    let mut hmm = HashMap::with_capacity(1000000);
-    input.iter().for_each(|a| {
-        for x in a.x..(a.x + a.width) {
-            for y in a.y..(a.y + a.height) {                
-                *hmm.entry((x, y)).or_insert(0) += 1;
-            }
-        }
-    });
-
-    hmm.values().filter(|x| **x > 1).count() as i32
-}
-*/
 fn exercise_2(input: Vec<Area>) -> i32 {
     input.iter().find(|x| !input.iter().any(|y| x.intersects(y))).unwrap().id
 }
