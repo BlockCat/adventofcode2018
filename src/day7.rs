@@ -1,7 +1,7 @@
 
 pub fn execute_exercises() {
     println!("Order: {}", exercise_1(read_input()));
-    println!("parallel time: {}", exercise_2(read_input(), 5, 60)); //1266 is too high
+    println!("parallel time: {}", exercise_2(read_input(), 5, 60));
 }
 
 fn read_input() -> Vec<(char, char)> {
@@ -104,7 +104,7 @@ fn exercise_2(input: Vec<(char, char)>, workers: u8, seconds_per_step: i32) -> i
     
     let mut heap = BinaryHeap::new();
     // Find all chars that have no constraints
-    for (i, c) in constraints.iter().filter(|(_, c)| **c == 0) {        
+    for (i, _) in constraints.iter().filter(|(_, c)| **c == 0) {        
         heap.push(&steps[(*i as u8 - b'A') as usize]);
     }
 
@@ -112,11 +112,12 @@ fn exercise_2(input: Vec<(char, char)>, workers: u8, seconds_per_step: i32) -> i
     let mut working: Vec<bool> = (0..workers).map(|x| false).collect();
     let mut time = 0;
     for worker in 0..workers { // Take initial jobs
-        while !heap.is_empty() {
+        if !heap.is_empty() {
             let node = heap.pop().unwrap();
             let time = seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
             event_heap.push((-time, worker, node));
             working[worker as usize] = true;
+            println!("t: {}, w:{}", time, worker);
         }
     }
 
@@ -125,20 +126,19 @@ fn exercise_2(input: Vec<(char, char)>, workers: u8, seconds_per_step: i32) -> i
         time = -t; //We don't have min heaps
         println!("{}", time);
 
-        for next_node in node.next.iter() {
-            //constraints[((*next_node as u8) - b'A') as usize] -= 1;
-            let precs = constraints.entry(*next_node).or_insert(0);
-            //let precs = constraints[((*next_node as u8) - b'A') as usize];
+        for next_node in node.next.iter() {        
+            let precs = constraints.entry(*next_node).or_insert(0);        
             *precs -= 1;
+
             if *precs == 0 {
                 heap.push(&steps[(*next_node as u8 - b'A')  as usize]);
             }
         }
 
         working[worker as usize] = false;        
-        let c = working.iter().enumerate().filter(|(i, is_working)| !**is_working).map(|(a, b)| (a, *b)).collect::<Vec<(usize, bool)>>();
+        let c = working.iter().enumerate().filter(|(_, is_working)| !**is_working).map(|(a, b)| (a, *b)).collect::<Vec<(usize, bool)>>();
         for (free_worker, _) in c {
-            while !heap.is_empty() {
+            if !heap.is_empty() {
                 let node = heap.pop().unwrap();
                 let time = time + seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
                 event_heap.push((-time, free_worker as u8, node));
@@ -148,7 +148,7 @@ fn exercise_2(input: Vec<(char, char)>, workers: u8, seconds_per_step: i32) -> i
         
     }
 
-    time + 1
+    time
 }
 
 #[cfg(test)]
@@ -169,6 +169,11 @@ Step F must be finished before step E can begin.";
     }
 
     #[test]
+    fn d7_ex1_s2() {
+        assert_eq!(exercise_1(read_input()), "GKCNPTVHIRYDUJMSXFBQLOAEWZ");
+    }
+
+    #[test]
     fn d7_ex2_s1() {
         let input = r"Step C must be finished before step A can begin.
 Step C must be finished before step F can begin.
@@ -178,7 +183,27 @@ Step B must be finished before step E can begin.
 Step D must be finished before step E can begin.
 Step F must be finished before step E can begin.";
         assert_eq!(exercise_2(parse_input(input), 2, 0), 15);
-    
+    }
+
+    #[test]
+    fn d7_ex2_s2() {
+        assert_eq!(exercise_2(read_input(), 5, 60), 1265);
+    }
+
+    #[bench]
+    fn d7_bench_read(b: &mut Bencher) {
+        b.iter(|| read_input());
+    }
+
+
+    #[bench]
+    fn d7_bench_ex1(b: &mut Bencher) {
+        b.iter(|| exercise_1(read_input()));
+    }
+
+    #[bench]
+    fn d7_bench_ex2(b: &mut Bencher) {
+        b.iter(|| exercise_2(read_input(), 5, 60));
     }
 
 }
