@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 pub fn execute_exercises() {
     //preprocess::pre_process(include_str!("../input/day4_in.txt")).into_iter().for_each(|(guard, sleep, wake)| println!("{} {} {}", guard, sleep, wake));
-    //println!("Largest area: {}", exercise_1(read_input()));
+    println!("Largest area: {}", exercise_1(read_input()));
     println!("Largest area safe: {}", exercise_2(read_input(), 10_000));    
 }
 

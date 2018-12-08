@@ -1,4 +1,3 @@
-#![feature(const_fn)]
 use std::collections::BinaryHeap;
 use std::iter::FromIterator;
 use std::cell::RefCell;
