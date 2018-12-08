@@ -1,6 +1,6 @@
 //! Day 1
 //! After feeling like you've been falling for a few minutes, you look at the device's tiny screen. "Error: Device must be calibrated before first use. Frequency drift detected. Cannot maintain destination lock." Below the message, the device shows a sequence of changes in frequency (your puzzle input). A value like +6 means the current frequency increases by 6; a value like -3 means the current frequency decreases by 3.
-use std::collections::HashSet;
+use hashbrown::HashSet;
 
 pub fn execute_exercises() {
     println!("Calibrated frequency: {}", exercise_1(frequency_delta_list()));
@@ -11,7 +11,7 @@ fn exercise_1(frequency_list: impl Iterator<Item = i32>) -> i32 {
     frequency_list.sum::<i32>()
 }
 
-fn exercise_2(mut frequency_list: impl Iterator<Item = i32> + std::clone::Clone) -> i32 {    
+fn exercise_2(frequency_list: impl Iterator<Item = i32> + std::clone::Clone) -> i32 {    
     let mut counter = 0i32;
 
     let mut visited_set = HashSet::with_capacity(1200);    

@@ -6,3 +6,4 @@ edition = "2018"
 rustflags = ["-C target-cpu=native"]
 
 [dependencies]
+hashbrown = "0.1.7"

@@ -41,7 +41,7 @@ fn parse_input(input: &'static str) -> impl Iterator<Item = (char, char)> {
 
 
 fn create_precendence_graph(input: impl Iterator<Item = (char, char)>) -> Vec<Node> {
-    let mut precendence_graph: Vec<Node> = (b'A'..b'Z'+1).into_iter().map(|a| Node {
+    let mut precendence_graph: Vec<Node> = (b'A'..=b'Z').map(|a| Node {
         value: a as char,
         constrained: RefCell::new(0),
         next: Vec::with_capacity(20)
@@ -62,7 +62,7 @@ fn exercise_1(input: impl Iterator<Item = (char, char)>) -> String {
     let precendence_graph = create_precendence_graph(input);
 
     let mut seen = Vec::with_capacity(20);
-    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && node.next.len() > 0));
+    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && !node.next.is_empty()));
     let offset = b'A' as usize;
 
     while !heap.is_empty() {
@@ -82,13 +82,13 @@ fn exercise_2(input: impl Iterator<Item = (char, char)>, workers: usize, seconds
     let offset = b'A' as usize;
 
     let mut working: Vec<bool> = (0..workers).map(|_| false).collect();
-    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && node.next.len() > 0));
+    let mut heap = BinaryHeap::from_iter(precendence_graph.iter().filter(|node| *node.constrained.borrow() == 0 && !node.next.is_empty()));
     let mut time = 0;    
     let mut event_heap = BinaryHeap::new();
     
     for (worker, ref mut working) in working.iter_mut().enumerate().take(heap.len()) { // Take initial jobs        
             let node = heap.pop().unwrap();
-            let time = seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
+            let time = seconds_per_step + i32::from(node.value as u8 - b'A' + 1);
             event_heap.push((-time, worker, node));
             **working = true;        
     }
@@ -106,7 +106,7 @@ fn exercise_2(input: impl Iterator<Item = (char, char)>, workers: usize, seconds
         for (free_worker, ref mut working) in working.iter_mut().enumerate().filter(|(_, is_working)| !**is_working) {
             if !heap.is_empty() {
                 let node = heap.pop().unwrap();
-                let time = time + seconds_per_step + (node.value as u8 - b'A' + 1) as i32;
+                let time = time + seconds_per_step + i32::from(node.value as u8 - b'A' + 1);
                 event_heap.push((-time, free_worker, node));
                 **working = true;
             }

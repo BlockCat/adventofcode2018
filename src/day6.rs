@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use hashbrown::HashSet;
+use hashbrown::HashMap;
 
 pub fn execute_exercises() {
     //preprocess::pre_process(include_str!("../input/day4_in.txt")).into_iter().for_each(|(guard, sleep, wake)| println!("{} {} {}", guard, sleep, wake));
@@ -16,7 +17,6 @@ fn read_input() -> Vec<(i32, i32)> {
 }
 
 fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
-    use std::collections::HashMap;
 
     let mut l = input[0].0;
     let mut r = input[0].0;
@@ -35,15 +35,15 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
 
     for x in (l-1)..(r+2) {
         for y in (u-1)..(b+2) {
-            let entry = map.entry((x, y)).or_insert(1000000);                 
+            let entry = map.entry((x, y)).or_insert(1_000_000);                 
             let book = bookkeeping.entry((x, y)).or_insert(None);
             input.iter().for_each(|(a, b)| {
-                let d = (a - x).abs() + (b - y).abs();                
+                let distance = (a - x).abs() + (b - y).abs();                
 
-                if d < *entry {
-                    *entry = d;                    
+                if distance < *entry {
+                    *entry = distance;                    
                     *book = Some((*a, *b));
-                } else if d == *entry {                    
+                } else if distance == *entry {                    
                     *book = None;
                 }
             });
@@ -77,8 +77,6 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
         };
     }
     let mut counter = HashMap::with_capacity(1000);
-        
-
     bookkeeping.values().filter_map(|i| {
             match *i {
                 None => None,
@@ -99,8 +97,7 @@ fn exercise_1(input: Vec<(i32, i32)>) -> i32 {
     *counter.values().max().unwrap() as i32
 }
 
-fn exercise_2(input: Vec<(i32, i32)>, size: i32) -> i32 {
-    use std::collections::HashMap;
+fn exercise_2(input: Vec<(i32, i32)>, size: i32) -> i32 {    
 
     let mut l = input[0].0;
     let mut r = input[0].0;
@@ -117,12 +114,9 @@ fn exercise_2(input: Vec<(i32, i32)>, size: i32) -> i32 {
     let mut counter = 0; 
 
     for x in (l-(b-u + 1))..(r+(b-u+1)) {
-        for y in (u-(r-l+1))..(b+(r-l+1)) {            
-            let c = input.iter().enumerate().map(|(i, (a, b))| {
-                (a - x).abs() + (b - y).abs()
-            }).sum::<i32>();
-
-            if c < size {
+        for y in (u-(r-l+1))..(b+(r-l+1)) {
+            let summed_distance = input.iter().map(|(a, b)| { (a - x).abs() + (b - y).abs() }).sum::<i32>();
+            if summed_distance < size {
                 counter += 1;
             }
         }

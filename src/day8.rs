@@ -32,7 +32,7 @@ fn exercise_1(mut input: impl Iterator<Item = u8>) -> u32 {
         if childrens[current_node] == 0 && metadatas[current_node] > 0 {
             // No children and there is metadata
             sum += (0..metadatas[current_node])
-            .map(|_| input.next().unwrap() as u32)
+            .map(|_| u32::from(input.next().unwrap()))
             .sum::<u32>();            
 
             // go up again
@@ -45,7 +45,7 @@ fn exercise_1(mut input: impl Iterator<Item = u8>) -> u32 {
                     break;
                 } else if metadatas[current_node] > 0 {
                     // There are no children left and there is metadata
-                    sum += (0..metadatas[current_node]).map(|_| input.next().unwrap() as u32).sum::<u32>();                   
+                    sum += (0..metadatas[current_node]).map(|_|u32::from(input.next().unwrap())).sum::<u32>();                   
                     current_node = parents[current_node];
                 } else {
                     // There are no children and no metadata
@@ -84,7 +84,7 @@ fn exercise_2(mut input: impl Iterator<Item = u8>) -> u32 {
         
         if childrens[current_node] == 0 && metadatas[current_node] > 0 {
             // No children and there is metadata                    
-            values[current_node] = (0..metadatas[current_node]).map(|_| input.next().unwrap() as u32).sum();            
+            values[current_node] = (0..metadatas[current_node]).map(|_| u32::from(input.next().unwrap())).sum();            
             
             current_node = parents[current_node];
 

@@ -11,7 +11,7 @@ pub fn execute_exercises() {
 }
 
 fn read_input() -> Vec<String> {
-    include_str!("../input/day2_in.txt").lines().map(|l| String::from(l)).collect()
+    include_str!("../input/day2_in.txt").lines().map(String::from).collect()
 }
 
 fn exercise_1(input: Vec<String>) -> i32 {

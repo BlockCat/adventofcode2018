@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 mod preprocess {
     use std::str::FromStr;
@@ -117,7 +117,7 @@ fn read_input() -> Vec<(i32, i32, i32)> {
 
 fn read_input_str(input:  &str) -> Vec<(i32, i32, i32)> {
     input.lines().map(|l| { 
-        let spl: Vec<&str> = l.split(" ").collect();        
+        let spl: Vec<&str> = l.split(' ').collect();        
         (spl[0].parse::<i32>().unwrap(), spl[1].parse::<i32>().unwrap(), spl[2].parse::<i32>().unwrap())
     }).collect()
 }
@@ -153,7 +153,7 @@ fn exercise_1(input: Vec<(i32, i32, i32)>) -> i32 {
 fn exercise_2(input: Vec<(i32, i32, i32)>) -> i32 {    
 
     let guard_minutes = input.into_iter().fold(HashMap::with_capacity(200), |mut acc, (guard, sleep, wake)| {
-        let ref mut minutes = *acc.entry(guard).or_insert([0u8; 60]);
+        let minutes = acc.entry(guard).or_insert([0u8; 60]);
         for m in sleep..wake {
             minutes[m as usize] += 1;            
         }        

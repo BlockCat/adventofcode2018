@@ -62,7 +62,7 @@ fn exercise_2(input: Vec<u8>) -> usize {
     let upper_case: Vec<u8> = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".bytes().collect();
 
     let input = Arc::new(input);
-    let children: Vec<thread::JoinHandle<usize>> = (0..26).into_iter().map(|i| {                
+    let children: Vec<thread::JoinHandle<usize>> = (0..26).map(|i| {                
         thread::spawn({
             let l = lower_case[i];
             let u = upper_case[i];
