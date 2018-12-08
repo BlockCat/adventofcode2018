@@ -2,7 +2,6 @@ use std::collections::BinaryHeap;
 use std::iter::FromIterator;
 use std::cell::RefCell;
 
-
 #[derive(Eq, PartialEq)]
 struct Node {
     value: char,
@@ -27,21 +26,21 @@ pub fn execute_exercises() {
     println!("parallel time: {}", exercise_2(read_input(), 5, 60));
 }
 
-fn read_input() -> Vec<(char, char)> {
+fn read_input() -> impl Iterator<Item = (char, char)> {
     parse_input(include_str!("../input/day7_in.txt"))
 }
 
-fn parse_input(input: &str) -> Vec<(char, char)> {
+fn parse_input(input: &'static str) -> impl Iterator<Item = (char, char)> {
     input.lines().map(|l| {
         let a = l[5..6].chars().next().unwrap();
         let b = l[36..37].chars().next().unwrap();
 
         (a, b)
-    }).collect::<Vec<(char, char)>>()
+    })
 }
 
 
-fn create_precendence_graph(input: Vec<(char, char)>) -> Vec<Node> {
+fn create_precendence_graph(input: impl Iterator<Item = (char, char)>) -> Vec<Node> {
     let mut precendence_graph: Vec<Node> = (b'A'..b'Z'+1).into_iter().map(|a| Node {
         value: a as char,
         constrained: RefCell::new(0),
@@ -49,7 +48,7 @@ fn create_precendence_graph(input: Vec<(char, char)>) -> Vec<Node> {
     }).collect();
 
     let offset = b'A';    
-    for (prec, todo) in input.into_iter().map(|(a, b)| (a as u8, b as u8)) {  
+    for (prec, todo) in input.map(|(a, b)| (a as u8, b as u8)) {  
         precendence_graph[(prec - offset) as usize].next.push(todo as char);
         *precendence_graph[(todo - offset) as usize].constrained.get_mut() += 1; 
     }
@@ -58,7 +57,7 @@ fn create_precendence_graph(input: Vec<(char, char)>) -> Vec<Node> {
 }
 
 
-fn exercise_1(input: Vec<(char, char)>) -> String {
+fn exercise_1(input: impl Iterator<Item = (char, char)>) -> String {
 
     let precendence_graph = create_precendence_graph(input);
 
@@ -78,7 +77,7 @@ fn exercise_1(input: Vec<(char, char)>) -> String {
     seen.iter().collect::<String>()
 }
 
-fn exercise_2(input: Vec<(char, char)>, workers: usize, seconds_per_step: i32) -> i32 {
+fn exercise_2(input: impl Iterator<Item = (char, char)>, workers: usize, seconds_per_step: i32) -> i32 {
     let precendence_graph = create_precendence_graph(input);
     let offset = b'A' as usize;
 
@@ -154,11 +153,6 @@ Step F must be finished before step E can begin.";
     #[test]
     fn d7_ex2_s2() {
         assert_eq!(exercise_2(read_input(), 4, 60), 1265);
-    }
-
-    #[bench]
-    fn d7_bench_read(b: &mut Bencher) {
-        b.iter(|| read_input());
     }
 
     #[bench]

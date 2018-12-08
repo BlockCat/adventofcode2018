@@ -6,15 +6,15 @@ macro_rules! execute {
         $x::execute_exercises();
     };
 }
-/*
-mod day1;
-mod day2;
-mod day3;
-mod day4;
-mod day5;
-mod day6;
-mod day7;*/
-mod day8;
+
+/*#[allow(dead_code)] mod day1;
+#[allow(dead_code)] mod day2;
+#[allow(dead_code)] mod day3;
+#[allow(dead_code)] mod day4;
+#[allow(dead_code)] mod day5;
+#[allow(dead_code)] mod day6;
+#[allow(dead_code)] mod day7;*/
+#[allow(dead_code)] mod day8;
 
 fn main() {
     /*execute!(day1);

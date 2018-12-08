@@ -134,6 +134,19 @@ mod tests {
     }
 
     #[test]
+    fn quick() {
+        let mut s = vec![1, 2, 3, 4, 5, 6];
+        let (a_sl, b_sl) = s.split_at_mut(3);
+
+        for s in a_sl {
+            *s -= 1;
+        }
+        for s in b_sl {
+            *s += 1;
+        }
+    }
+
+    #[test]
     fn d8_ex1_s2() {
         let input = "2 3 0 3 10 11 12 1 0 0 1 99 1 1 2".split(' ').map(|c| c.parse::<u8>().unwrap());
         assert_eq!(exercise_1(input), 136);
