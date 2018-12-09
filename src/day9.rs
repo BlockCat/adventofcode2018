@@ -6,8 +6,7 @@ pub fn execute_exercises() {
 }
 
 #[derive(Debug)]
-struct Reiger {    
-    left: Vec<u32>,
+struct Reiger {        
     right: VecDeque<u32>,
     current: u32,
     counter: u32,
@@ -18,14 +17,21 @@ impl Iterator for Reiger {
 
     fn next(&mut self) -> Option<Self::Item> {
         for _ in 0..22 {
-            self.counter += 1;
-            self.right(1);
-            self.insert(self.counter);
+            self.counter += 1;            
+            self.right.push_back(self.current);
+            self.current = self.right.pop_front().unwrap();
+            self.right.push_back(self.current);
+            self.current = self.counter;            
         }
 
         self.counter += 1;
-        self.left(7);
-        let value = self.remove();
+        for _ in 0..7 {
+            self.right.push_front(self.current);
+            self.current = self.right.pop_back().unwrap();            
+        }        
+        let value = self.current;
+        
+        self.current = self.right.pop_front().unwrap();
         Some((self.counter, value))            
     }
 }
@@ -33,59 +39,13 @@ impl Iterator for Reiger {
 impl Reiger {
 
     fn with_capacity(capacity: usize) -> Self {
-        Reiger {
-            left: Vec::with_capacity(capacity / 2),
-            right: VecDeque::with_capacity(capacity / 2),
+        Reiger {     
+            right: VecDeque::with_capacity(capacity),
             current: 0,
             counter: 0,
         }
     }
-    
-    fn len(&self) -> usize {
-        (self.left.len() + self.right.len() + 1)
-    }
-
-    fn left(&mut self, count: usize) {
-        let current_pos = self.left.len();        
-        let target_pos = (self.len() + current_pos - count) % self.len();
-        self.move_to(target_pos);
-    }
-
-    fn right(&mut self, count: usize) {
-        let current_pos = self.left.len();
-        let target_pos = (current_pos + count) % self.len();
-        self.move_to(target_pos);
-    }
-
-     fn move_to(&mut self, index: usize) {
-        let current_pos = self.left.len();        
-        if current_pos > index {
-            for _ in 0..(current_pos - index) {
-                self.right.push_front(self.current);
-                self.current = self.left.pop().unwrap();
-            }
-        } 
-        if current_pos < index {
-            for _ in 0..(index - current_pos) {
-                self.left.push(self.current);
-                self.current = self.right.pop_front().unwrap();                
-            }
-        }
-     }
-
-     fn insert(&mut self, value: u32) {
-        self.left.push(self.current);
-        self.current = value;
-     }
-
-     fn remove(&mut self) -> u32 {
-        let v = self.current;
-        self.current = self.right.pop_front().unwrap_or_else(|| {self.left.pop().unwrap()});
-
-        v
-     }
 }
-
 
 fn exercise_1(players: u32, marbles: usize) -> u64 {    
     let mut scores = (0..players).map(|_| 0u64).collect::<Vec<_>>();
@@ -93,9 +53,7 @@ fn exercise_1(players: u32, marbles: usize) -> u64 {
     for (marble, score) in Reiger::with_capacity(marbles).take(marbles / 23) {
         scores[((marble - 1) % players) as usize] += (marble + score) as u64;
     }
-
     scores.into_iter().max().unwrap()
-
 }
 
 #[cfg(test)]
