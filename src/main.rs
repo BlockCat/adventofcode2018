@@ -8,14 +8,15 @@ macro_rules! execute {
     };
 }
 
-#[allow(dead_code)] mod day1;
+/*#[allow(dead_code)] mod day1;
 #[allow(dead_code)] mod day2;
 #[allow(dead_code)] mod day3;
 #[allow(dead_code)] mod day4;
 #[allow(dead_code)] mod day5;
 #[allow(dead_code)] mod day6;
 #[allow(dead_code)] mod day7;
-#[allow(dead_code)] mod day8;
+#[allow(dead_code)] mod day8;*/
+#[allow(dead_code)] mod day9;
 
 fn main() {
     /*execute!(day1);
@@ -24,6 +25,7 @@ fn main() {
     execute!(day4);
     execute!(day5);
     execute!(day6);
-    execute!(day7);*/
-    execute!(day8);
+    execute!(day7);
+    execute!(day8);*/
+    execute!(day9);
 }
