@@ -6,7 +6,7 @@ pub fn execute_exercises() {
 }
 
 #[derive(Debug)]
-struct Reiger {
+struct Reiger {    
     left: Vec<u32>,
     right: VecDeque<u32>,
     current: u32,
