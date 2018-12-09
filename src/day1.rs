@@ -24,7 +24,7 @@ fn exercise_2(frequency_list: impl Iterator<Item = i32> + std::clone::Clone) -> 
         }
     }
     
-    unreachable!()    
+    unreachable!()
 }
 fn frequency_delta_list() -> impl Iterator<Item = i32> + std::clone::Clone {
     include_str!("../input/day1_in.txt").lines().map(|l| l.parse::<i32>().unwrap())
