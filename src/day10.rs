@@ -119,4 +119,9 @@ mod tests {
 
         exercise_1(parse_input(input));
     }
+
+    #[bench]
+    fn d10_bench_ex1(b: &mut Bencher) {
+        b.iter(|| exercise_1(read_input()));
+    }
 }

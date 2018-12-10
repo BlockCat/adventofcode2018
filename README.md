@@ -37,4 +37,6 @@ test day8::tests::d8_bench_ex2 ... bench:     446,193 ns/iter (+/- 71,412)
 
 test day9::tests::d9_bench_ex1 ... bench:     398,390 ns/iter (+/- 363,164)
 test day9::tests::d9_bench_ex2 ... bench:  61,729,740 ns/iter (+/- 14,717,271)
+
+test day10::tests::d10_bench_ex1 ... bench:   2,718,090 ns/iter (+/- 28,040)
 ```
