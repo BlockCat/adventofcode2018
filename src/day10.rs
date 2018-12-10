@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::cmp;
 
 pub fn execute_exercises() {
     exercise_1(read_input());
@@ -16,34 +16,22 @@ fn parse_input(input: &'static str) -> Vec<(i32, i32, i32, i32)> {
     }).collect()
 }
 
-fn exercise_1(mut input: Vec<(i32, i32, i32, i32)>) {    
-    
-    let max_y = input.iter().max_by(|a, b| a.1.cmp(&b.1)).unwrap().1;
-    let min_y = input.iter().min_by(|a, b| a.1.cmp(&b.1)).unwrap().1;
+fn exercise_1(mut input: Vec<(i32, i32, i32, i32)>) {
+    let mut prev_h = std::i32::MAX;
+    for counter in 1.. {
+        let (up, down) = input.iter_mut()            
+            .fold((std::i32::MAX, std::i32::MIN), |(min, max), (x, y, dx, dy)| {
+                *x += *dx;
+                *y += *dy;
+                (cmp::min(min, *y), cmp::max(max, *y))
+            });
 
-    let mut prev_h = max_y - min_y + 1;    
-    let mut counter = 0;
-    loop {
-        counter+=1;
-        let (mut up, mut down) = (1000, -1000);
-        for (x, y, dx, dy) in input.iter_mut() {
-            *x += *dx;
-            *y += *dy;
-
-            if *y > down {
-                down = *y;
-            }
-            if *y < up {
-                up = *y;
-            }            
-            //println!("{}, {}", x, y);
-        }
         if down-up < 10 {
             print(&input);
             println!("seconds: {}", counter);
         }
 
-        if (down - up) > prev_h {
+        if (down - up) >= prev_h {
             break;
         } else {
             prev_h = down - up;
@@ -53,15 +41,16 @@ fn exercise_1(mut input: Vec<(i32, i32, i32, i32)>) {
 
 fn print(input: &Vec<(i32, i32, i32, i32)>) {
     use hashbrown::HashSet;
-    let (mut up, mut down) = (1000, -1000);
-    let (mut left, mut right) = (1000, -1000);
+    let (mut up, mut down) = (std::i32::MAX, std::i32::MIN);
+    let (mut left, mut right) = (std::i32::MAX, std::i32::MIN);
+    
     let c: HashSet<(i32, i32)> = input.iter()
-        .inspect(|(x, y, _, _)| {
-            if *x < left { left = *x; }
-            if *x > right { right = *x; }
-            if *y > down { down = *y; }
-            if *y < up { up = *y; }
-        }).map(|(x, y, _, _)| {
+        .map(|(x, y, _, _)| {
+            left = cmp::min(left, *x);
+            right = cmp::max(right, *x);            
+            up = cmp::min(up, *y);
+            down = cmp::max(down, *y);  
+
             (*x, *y)
         }).collect();
 
