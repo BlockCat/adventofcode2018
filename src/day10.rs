@@ -39,7 +39,7 @@ fn exercise_1(mut input: Vec<(i32, i32, i32, i32)>) {
     }    
 }
 
-fn print(input: &Vec<(i32, i32, i32, i32)>) {
+fn print(input: &[(i32, i32, i32, i32)]) {
     use hashbrown::HashSet;
     let (mut up, mut down) = (std::i32::MAX, std::i32::MIN);
     let (mut left, mut right) = (std::i32::MAX, std::i32::MIN);
