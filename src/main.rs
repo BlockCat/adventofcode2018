@@ -1,6 +1,7 @@
 #![feature(test)]
 extern crate test;
 extern crate hashbrown;
+extern crate rayon;
 
 macro_rules! execute {
     ($x:ident) => {
@@ -17,8 +18,9 @@ macro_rules! execute {
 #[allow(dead_code)] mod day7;
 #[allow(dead_code)] mod day8;
 #[allow(dead_code)] mod day9;
-mod day10;*/
-mod day11;
+#[allow(dead_code)] mod day10;
+#[allow(dead_code)] mod day11;*/
+mod day12;
 fn main() {
     /*execute!(day1);
     execute!(day2);
@@ -30,5 +32,5 @@ fn main() {
     execute!(day8);
     execute!(day9);
     execute!(day10);*/
-    execute!(day11);
+    execute!(day12);
 }

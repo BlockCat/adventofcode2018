@@ -1,5 +1,8 @@
+use rayon::prelude::*;
+
+
 pub fn execute_exercises() {
-    println!("Max 3x3 {:?}",exercise_1(9995));
+    println!("Max 3x3 grid: {:?}",exercise_1(9995));
     println!("max: {:?}", exercise_2(9995));
 }
 
@@ -28,12 +31,10 @@ fn build_prefix_sum_fuel_cells(input: i32) -> [[i32; 300]; 300] {
 fn exercise_1(input: i32) -> (i32, (usize, usize)) {
     let mut fuel_cells = [[0i32; 300]; 300];    
 
-    // first phase
-    
+    // first phase    
     for x in 0..300 {
-        let rack_id = x + 11;
         for y in 0..300 {
-            let power_level = ((((rack_id * (y+1) + input) * rack_id) / 100) % 10) - 5;
+            let power_level = power_level(input, x, y);
             fuel_cells[x as usize][y as usize] = power_level;
         }
     }
@@ -55,8 +56,6 @@ fn exercise_1(input: i32) -> (i32, (usize, usize)) {
 }
 
 
-
-
 fn exercise_2(input: i32) -> (i32, (usize, usize), usize) {
 
     let fuel_cells = build_prefix_sum_fuel_cells(input);
@@ -69,29 +68,21 @@ fn exercise_2(input: i32) -> (i32, (usize, usize), usize) {
     
     for xy in 1..300 {
         for i in 0..(300 - xy) {            
-            {
-                let (nx, ny) = (xy + i, i);
-                let vlak = fuel_cells[nx][ny] - fuel_cells[xy-1][ny];
-                max = std::cmp::max(max, (vlak, (xy+1, 1), i+1));
-            }
-            {
-                let (nx, ny) = (i, xy + i);
-                let vlak = fuel_cells[nx][ny] - fuel_cells[nx][xy - 1];
-                max = std::cmp::max(max, (vlak, (1, xy+1), i+1));
-            }
+            let x_surface = fuel_cells[xy + i][i] - fuel_cells[xy-1][i];
+            let y_surface = fuel_cells[i][xy + i] - fuel_cells[i][xy - 1];
+            max = std::cmp::max(max, (x_surface, (xy+1, 1), i+1));            
+            max = std::cmp::max(max, (y_surface, (1, xy+1), i+1));            
         }
     }
 
     for y in 1..300 {
         for x in 1..300 {
-            for i in 0..(300 - std::cmp::max(x, y)) {
-                let (nx, ny) = (x + i, y + i);                
-                let vlak = fuel_cells[x - 1][y - 1] + fuel_cells[nx][ny] - fuel_cells[nx][y-1]-fuel_cells[x-1][ny];
-                max = std::cmp::max(max, (vlak, (x+1, y+1), i+1));
+            for i in 0..(300 - std::cmp::max(x, y)) {                
+                let surface = fuel_cells[x - 1][y - 1] + fuel_cells[x + i][y + i] - fuel_cells[x + i][y-1]-fuel_cells[x-1][y + i];
+                max = std::cmp::max(max, (surface, (x+1, y+1), i+1));
             }
         }
     }
-
 
     max
 }
