@@ -40,8 +40,8 @@ test day9::tests::d9_bench_ex2 ... bench:  61,729,740 ns/iter (+/- 14,717,271)
 
 test day10::tests::d10_bench_ex1 ... bench:   2,718,090 ns/iter (+/- 28,040)
 
-test day11::tests::day11_bench_ex1 ... bench:     252,300 ns/iter (+/- 31,462)
-test day11::tests::day11_bench_ex2 ... bench:  13,841,890 ns/iter (+/- 1,227,250)
+test day11::tests::day11_bench_ex1 ... bench:     249,310 ns/iter (+/- 5,213)
+test day11::tests::day11_bench_ex2 ... bench:  11,484,850 ns/iter (+/- 155,478)
 
 test day12::tests::day12_ex1 ... bench:      16,288 ns/iter (+/- 446)
 test day12::tests::day12_ex2 ... bench:      71,002 ns/iter (+/- 734)
