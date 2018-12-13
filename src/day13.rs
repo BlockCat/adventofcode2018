@@ -9,7 +9,7 @@ enum Direction {
 
 // (y, x)
 type Position = (usize, usize);
-type TrackMap = [[char; 152]; 152];
+type TrackMap = [[char; 152 ]; 152];
 
 impl Add<Direction> for Position {
     type Output = Position;
@@ -67,12 +67,12 @@ pub fn execute_exercises() {
     println!("Final cart at: {:?}", exercise_2(a, b))
 }
 
-fn read_input() -> (HashMap<Position, char>, Vec<(Position, Direction, u32)>) {
+fn read_input() -> (TrackMap, Vec<(Position, Direction, u32)>) {
     parse_input(include_str!("../input/day13_in.txt"))
 }
 
-fn parse_input(input: &str) -> (HashMap<Position, char>, Vec<(Position, Direction, u32)>) {
-    let mut map = HashMap::with_capacity(1000);
+fn parse_input(input: &str) -> (TrackMap, Vec<(Position, Direction, u32)>) {
+    let mut map = [[' '; 152]; 152];
     let mut carts = Vec::with_capacity(20);
     for (y, line) in input.lines().enumerate() {
         for (x, character) in line.chars().enumerate() {            
@@ -81,9 +81,9 @@ fn parse_input(input: &str) -> (HashMap<Position, char>, Vec<(Position, Directio
                 'v' => {carts.push(((y, x), Direction::SOUTH, 0));}
                 '<' => {carts.push(((y, x), Direction::WEST, 0));}
                 '^' => {carts.push(((y, x), Direction::NORTH, 0));}
-                '/' => {map.insert((y, x), character);},
-                '\\' => {map.insert((y, x), character);},
-                '+' => {map.insert((y, x), character);},
+                '/' => {map[y][x] = character;},
+                '\\' => {map[y][x] = character;},
+                '+' => {map[y][x] = character;},
                 _=> {}
             }
         }
@@ -93,7 +93,7 @@ fn parse_input(input: &str) -> (HashMap<Position, char>, Vec<(Position, Directio
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_1(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction, u32)>) -> Position {
+fn exercise_1(map: TrackMap, mut carts: Vec<(Position, Direction, u32)>) -> Position {
     
     loop {
         carts.sort();
@@ -108,22 +108,21 @@ fn exercise_1(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction,
             }            
 
             // Next direction
-            if let Some(character) = map.get(pos) {
-                let result = match (*character, *state) {
-                    ('+', 0) => (direction.left(), 1),
-                    ('+', 1) => (*direction, 2),
-                    ('+', 2) => (direction.right(), 0),
-                    (_, _) => (direction.next_direction(*character), *state)
-                };
-                *direction = result.0;
-                *state = result.1;
-            }
+            let character = map[pos.0][pos.1];
+            let result = match (character, *state) {
+                ('+', 0) => (direction.left(), 1),
+                ('+', 1) => (*direction, 2),
+                ('+', 2) => (direction.right(), 0),
+                (_, _) => (direction.next_direction(character), *state)
+            };
+            *direction = result.0;
+            *state = result.1;
         }
     }
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_2(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction, u32)>) -> Position {
+fn exercise_2(map: TrackMap, mut carts: Vec<(Position, Direction, u32)>) -> Position {
 
     loop {
         carts.sort();
@@ -138,16 +137,16 @@ fn exercise_2(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction,
             *pos = *pos + *direction;
 
             // Next direction
-            if let Some(character) = map.get(pos) {
-                let result = match (*character, *state) {
-                    ('+', 0) => (direction.left(), 1),
-                    ('+', 1) => (*direction, 2),
-                    ('+', 2) => (direction.right(), 0),
-                    (_, _) => (direction.next_direction(*character), *state)
-                };
-                *direction = result.0;
-                *state = result.1;
-            }
+            
+            let character = map[pos.0][pos.1];
+            let result = match (character, *state) {
+                ('+', 0) => (direction.left(), 1),
+                ('+', 1) => (*direction, 2),
+                ('+', 2) => (direction.right(), 0),
+                (_, _) => (direction.next_direction(character), *state)
+            };
+            *direction = result.0;
+            *state = result.1;
 
             visited.entry(*pos).or_insert(vec!()).push((*pos, *direction, *state));
         }
