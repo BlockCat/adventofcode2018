@@ -1,3 +1,4 @@
+#![feature(vec_remove_item)]
 #![feature(test)]
 extern crate test;
 extern crate hashbrown;
@@ -19,8 +20,9 @@ macro_rules! execute {
 #[allow(dead_code)] mod day8;
 #[allow(dead_code)] mod day9;
 #[allow(dead_code)] mod day10;
-#[allow(dead_code)] mod day11;*/
-mod day12;
+#[allow(dead_code)] mod day11;
+#[allow(dead_code)] mod day12;*/
+mod day13;
 fn main() {
     /*execute!(day1);
     execute!(day2);
@@ -31,6 +33,7 @@ fn main() {
     execute!(day7);
     execute!(day8);
     execute!(day9);
-    execute!(day10);*/
-    execute!(day12);
+    execute!(day10);
+    execute!(day12);*/
+    execute!(day13);
 }
