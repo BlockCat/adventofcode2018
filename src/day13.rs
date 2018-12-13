@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::ops::Add;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
@@ -8,10 +7,14 @@ enum Direction {
     NORTH, EAST, SOUTH, WEST
 }
 
-impl Add<Direction> for (usize, usize) {
-    type Output = (usize, usize);
+// (y, x)
+type Position = (usize, usize);
+type TrackMap = [[char; 152]; 152];
 
-    fn add(self, other: Direction) -> (usize, usize) {
+impl Add<Direction> for Position {
+    type Output = Position;
+
+    fn add(self, other: Direction) -> Position {
         let (y, x) = self;
         match other {
             Direction::NORTH => (y - 1, x),
@@ -57,7 +60,6 @@ impl Direction {
     }
 }
 
-
 pub fn execute_exercises() {  
     let (a, b) = read_input();
     println!("Collision at: {:?}", exercise_1(a, b));
@@ -65,11 +67,11 @@ pub fn execute_exercises() {
     println!("Final cart at: {:?}", exercise_2(a, b))
 }
 
-fn read_input() -> (HashMap<(usize, usize), char>, Vec<((usize, usize), Direction, u32)>) {
+fn read_input() -> (HashMap<Position, char>, Vec<(Position, Direction, u32)>) {
     parse_input(include_str!("../input/day13_in.txt"))
 }
 
-fn parse_input(input: &str) -> (HashMap<(usize, usize), char>, Vec<((usize, usize), Direction, u32)>) {
+fn parse_input(input: &str) -> (HashMap<Position, char>, Vec<(Position, Direction, u32)>) {
     let mut map = HashMap::with_capacity(1000);
     let mut carts = Vec::with_capacity(20);
     for (y, line) in input.lines().enumerate() {
@@ -91,7 +93,7 @@ fn parse_input(input: &str) -> (HashMap<(usize, usize), char>, Vec<((usize, usiz
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_1(map: HashMap<(usize, usize), char>, mut carts: Vec<((usize, usize), Direction, u32)>) -> (usize, usize) {
+fn exercise_1(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction, u32)>) -> Position {
     
     loop {
         carts.sort();
@@ -121,11 +123,11 @@ fn exercise_1(map: HashMap<(usize, usize), char>, mut carts: Vec<((usize, usize)
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_2(map: HashMap<(usize, usize), char>, mut carts: Vec<((usize, usize), Direction, u32)>) -> (usize, usize) {
+fn exercise_2(map: HashMap<Position, char>, mut carts: Vec<(Position, Direction, u32)>) -> Position {
 
     loop {
         carts.sort();
-        let mut visited: HashMap<(usize, usize), Vec<((usize, usize), Direction, u32)>> = HashMap::with_capacity(20);
+        let mut visited: HashMap<Position, Vec<(Position, Direction, u32)>> = HashMap::with_capacity(20);
         for (pos, direction, state) in carts.iter_mut() {
             
             if visited.contains_key(pos) {
