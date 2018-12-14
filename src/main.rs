@@ -22,7 +22,8 @@ macro_rules! execute {
 #[allow(dead_code)] mod day10;
 #[allow(dead_code)] mod day11;
 #[allow(dead_code)] mod day12;*/
-mod day13;
+//mod day13;
+mod day14;
 fn main() {
     /*execute!(day1);
     execute!(day2);
@@ -34,6 +35,7 @@ fn main() {
     execute!(day8);
     execute!(day9);
     execute!(day10);
-    execute!(day12);*/
-    execute!(day13);
+    execute!(day12);
+    execute!(day13);*/
+    execute!(day14);
 }

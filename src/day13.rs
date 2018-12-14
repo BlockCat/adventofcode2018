@@ -113,6 +113,7 @@ fn exercise_1(map: HashMap<(usize, usize), char>, mut carts: Vec<(usize, usize, 
 fn exercise_2(map: HashMap<(usize, usize), char>, mut carts: Vec<(usize, usize, Direction, u32)>) -> (usize, usize) {
 
     loop {
+        // We can probably skip a whole lot of hashmap insertions by checking the min distance between two carts.
         carts.sort();
         let mut visited: HashMap<(usize, usize), Vec<(usize, usize, Direction, u32)>> = HashMap::with_capacity(20);
         for (y, x, direction, state) in carts.iter_mut() {
