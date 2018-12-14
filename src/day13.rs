@@ -1,10 +1,28 @@
-use std::collections::VecDeque;
+use std::ops::Add;
 use hashbrown::HashMap;
 use hashbrown::HashSet;
 
 #[derive(Eq, Ord, PartialEq, PartialOrd, Clone, Copy, Debug)]
 enum Direction {
     NORTH, EAST, SOUTH, WEST
+}
+
+// (y, x)
+type Position = (usize, usize);
+type TrackMap = [[char; 152 ]; 152];
+
+impl Add<Direction> for Position {
+    type Output = Position;
+
+    fn add(self, other: Direction) -> Position {
+        let (y, x) = self;
+        match other {
+            Direction::NORTH => (y - 1, x),
+            Direction::SOUTH => (y + 1, x),
+            Direction::EAST => (y, x + 1),
+            Direction::WEST => (y, x - 1)
+        }
+    }
 }
 
 
@@ -42,7 +60,6 @@ impl Direction {
     }
 }
 
-
 pub fn execute_exercises() {  
     let (a, b) = read_input();
     println!("Collision at: {:?}", exercise_1(a, b));
@@ -50,23 +67,23 @@ pub fn execute_exercises() {
     println!("Final cart at: {:?}", exercise_2(a, b))
 }
 
-fn read_input() -> (HashMap<(usize, usize), char>, Vec<(usize, usize, Direction, u32)>) {
+fn read_input() -> (TrackMap, Vec<(Position, Direction, u32)>) {
     parse_input(include_str!("../input/day13_in.txt"))
 }
 
-fn parse_input(input: &str) -> (HashMap<(usize, usize), char>, Vec<(usize, usize, Direction, u32)>) {
-    let mut map = HashMap::with_capacity(1000);
+fn parse_input(input: &str) -> (TrackMap, Vec<(Position, Direction, u32)>) {
+    let mut map = [[' '; 152]; 152];
     let mut carts = Vec::with_capacity(20);
     for (y, line) in input.lines().enumerate() {
         for (x, character) in line.chars().enumerate() {            
             match character {
-                '>' => {carts.push((y, x, Direction::EAST, 0));}
-                'v' => {carts.push((y, x, Direction::SOUTH, 0));}
-                '<' => {carts.push((y, x, Direction::WEST, 0));}
-                '^' => {carts.push((y, x, Direction::NORTH, 0));}
-                '/' => {map.insert((y, x), character);},
-                '\\' => {map.insert((y, x), character);},
-                '+' => {map.insert((y, x), character);},
+                '>' => {carts.push(((y, x), Direction::EAST, 0));}
+                'v' => {carts.push(((y, x), Direction::SOUTH, 0));}
+                '<' => {carts.push(((y, x), Direction::WEST, 0));}
+                '^' => {carts.push(((y, x), Direction::NORTH, 0));}
+                '/' => {map[y][x] = character;},
+                '\\' => {map[y][x] = character;},
+                '+' => {map[y][x] = character;},
                 _=> {}
             }
         }
@@ -76,73 +93,63 @@ fn parse_input(input: &str) -> (HashMap<(usize, usize), char>, Vec<(usize, usize
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_1(map: HashMap<(usize, usize), char>, mut carts: Vec<(usize, usize, Direction, u32)>) -> (usize, usize) {
+fn exercise_1(map: TrackMap, mut carts: Vec<(Position, Direction, u32)>) -> Position {
     
     loop {
         carts.sort();
         let mut set = HashSet::with_capacity(carts.len());
-        for (y, x, direction, state) in carts.iter_mut() {
+        for (pos, direction, state) in carts.iter_mut() {
             // Move cart            
-            match direction {
-                Direction::NORTH => *y -= 1,
-                Direction::SOUTH => *y += 1,
-                Direction::EAST => *x += 1,
-                Direction::WEST => *x -= 1,
-            }
+            *pos = *pos + *direction;
             
-            if !set.insert((*y, *x)) {
-                return (*x, *y);
+            if !set.insert(*pos) {
+                let (y, x) = *pos;
+                return (x, y);
             }            
 
             // Next direction
-            if let Some(character) = map.get(&(*y, *x)) {
-                let result = match (*character, *state) {
-                    ('+', 0) => (direction.left(), 1),
-                    ('+', 1) => (*direction, 2),
-                    ('+', 2) => (direction.right(), 0),
-                    (_, _) => (direction.next_direction(*character), *state)
-                };
-                *direction = result.0;
-                *state = result.1;
-            }
+            let character = map[pos.0][pos.1];
+            let result = match (character, *state) {
+                ('+', 0) => (direction.left(), 1),
+                ('+', 1) => (*direction, 2),
+                ('+', 2) => (direction.right(), 0),
+                (_, _) => (direction.next_direction(character), *state)
+            };
+            *direction = result.0;
+            *state = result.1;
         }
     }
 }
 
 // Remember coords are in (y, x) for sorting (matrix coords)
-fn exercise_2(map: HashMap<(usize, usize), char>, mut carts: Vec<(usize, usize, Direction, u32)>) -> (usize, usize) {
+fn exercise_2(map: TrackMap, mut carts: Vec<(Position, Direction, u32)>) -> Position {
 
     loop {
         // We can probably skip a whole lot of hashmap insertions by checking the min distance between two carts.
         carts.sort();
-        let mut visited: HashMap<(usize, usize), Vec<(usize, usize, Direction, u32)>> = HashMap::with_capacity(20);
-        for (y, x, direction, state) in carts.iter_mut() {
+        let mut visited: HashMap<Position, Vec<(Position, Direction, u32)>> = HashMap::with_capacity(20);
+        for (pos, direction, state) in carts.iter_mut() {
             
-            if visited.contains_key(&(*y, *x)) {
-                visited.get_mut(&(*y, *x)).unwrap().push((*y, *x, *direction, *state));     
+            if visited.contains_key(pos) {
+                visited.get_mut(pos).unwrap().push((*pos, *direction, *state));     
                 continue;
             }
             // Move cart
-            match direction {
-                Direction::NORTH => *y -= 1,
-                Direction::SOUTH => *y += 1,
-                Direction::EAST => *x += 1,
-                Direction::WEST => *x -= 1,
-            }            
+            *pos = *pos + *direction;
 
             // Next direction
-            if let Some(character) = map.get(&(*y, *x)) {
-                let result = match (*character, *state) {
-                    ('+', 0) => (direction.left(), 1),
-                    ('+', 1) => (*direction, 2),
-                    ('+', 2) => (direction.right(), 0),
-                    (_, _) => (direction.next_direction(*character), *state)
-                };
-                *direction = result.0;
-                *state = result.1;
-            }
+            
+            let character = map[pos.0][pos.1];
+            let result = match (character, *state) {
+                ('+', 0) => (direction.left(), 1),
+                ('+', 1) => (*direction, 2),
+                ('+', 2) => (direction.right(), 0),
+                (_, _) => (direction.next_direction(character), *state)
+            };
+            *direction = result.0;
+            *state = result.1;
 
-            visited.entry((*y, *x)).or_insert(vec!()).push((*y, *x, *direction, *state));
+            visited.entry(*pos).or_insert(vec!()).push((*pos, *direction, *state));
         }
 
         // Remove all carts on a collision place        
@@ -151,7 +158,8 @@ fn exercise_2(map: HashMap<(usize, usize), char>, mut carts: Vec<(usize, usize, 
         }).flatten().cloned().collect();
 
         if carts.len() == 1 {            
-            return (carts[0].1, carts[0].0);
+            let (y, x) = carts[0].0;
+            return (x, y);
         }     
     }
 }
