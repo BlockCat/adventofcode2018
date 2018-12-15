@@ -16,7 +16,8 @@ fn exercise_1(input: usize) -> Vec<u8> {
     let mut elf_2 = 1;
 
     while recipe_grades.len() < (input + 10) {
-        let new_grade = recipe_grades[elf_1] + recipe_grades[elf_2];
+        let (a, b) = (recipe_grades[elf_1], recipe_grades[elf_2]);
+        let new_grade = a + b;
 
         if new_grade >= 10 {
             recipe_grades.push(new_grade / 10);
@@ -25,8 +26,8 @@ fn exercise_1(input: usize) -> Vec<u8> {
             recipe_grades.push(new_grade);
         }
 
-        elf_1 = (elf_1 + recipe_grades[elf_1] as usize + 1) % recipe_grades.len();
-        elf_2 = (elf_2 + recipe_grades[elf_2] as usize + 1) % recipe_grades.len();
+        elf_1 = (elf_1 + a as usize + 1) % recipe_grades.len();
+        elf_2 = (elf_2 + b as usize + 1) % recipe_grades.len();
 
         //println!("{:?}", recipe_grades);
     }
@@ -44,7 +45,8 @@ fn exercise_2(input: Vec<u8>) -> usize {
 
     let input_len = input.len();
     loop {
-        let new_grade = recipe_grades[elf_1] + recipe_grades[elf_2];
+        let (a, b) = (recipe_grades[elf_1], recipe_grades[elf_2]);
+        let new_grade = a + b;
         let recipe_len = recipe_grades.len();
         if new_grade >= 10 {
             recipe_grades.push(new_grade / 10);
@@ -62,10 +64,8 @@ fn exercise_2(input: Vec<u8>) -> usize {
             }
         }
 
-        elf_1 = (elf_1 + recipe_grades[elf_1] as usize + 1) % recipe_grades.len();
-        elf_2 = (elf_2 + recipe_grades[elf_2] as usize + 1) % recipe_grades.len();
-
-        //println!("{:?}", recipe_grades);
+        elf_1 = (elf_1 + a as usize + 1) % recipe_grades.len();
+        elf_2 = (elf_2 + b as usize + 1) % recipe_grades.len();
     }
 }
 
