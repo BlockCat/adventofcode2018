@@ -53,6 +53,6 @@ test day13::tests::day13_bench_read ... bench:     170,154 ns/iter (+/- 5,594)
 test day14::tests::day14_bench_ex1 ... bench:   4,342,005 ns/iter (+/- 47,718)
 test day14::tests::day14_bench_ex2 ... bench: 168,918,650 ns/iter (+/- 3,944,586)
 
-test day15::tests::day15_bench_ex1 ... bench:  21,286,000 ns/iter (+/- 845,819)
-test day15::tests::day15_bench_ex2 ... bench:  59,285,890 ns/iter (+/- 2,224,514)
+test day15::tests::day15_bench_ex1 ... bench:  21,467,650 ns/iter (+/- 2,138,195)
+test day15::tests::day15_bench_ex2 ... bench:  59,974,530 ns/iter (+/- 533,632)
 ```

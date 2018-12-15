@@ -143,42 +143,57 @@ fn parse_input(input: &str) -> (Vec<Vec<bool>>, Vec<Entity>) {
     (map, entities)
 }
 
+fn find_path(map: &Vec<Vec<bool>>, entities: &Vec<Entity>, entity: &Entity) -> Vec<Location> {
+    let targets: Vec<_> = entities.iter().filter(|e| { e.entity_type != entity.entity_type && e.health > 0}).map(|e| e.location).collect();
+    let objects: Vec<_> = entities.iter().filter(|e| *e != entity && e.health > 0).map(|e| e.location).collect();
+    pathfinding::find_path(&map, entity.location, &targets, &objects)
+}
+
+fn get_enemy_mut<'a>(entity: &Entity, entities: &'a mut Vec<Entity>) -> &'a mut Entity {
+    entities.iter_mut()
+        .filter(|e| {
+            e.entity_type != entity.entity_type //find enemy entities
+            && e.health > 0 // that are alive
+            && manhattan(e.location, entity.location) == 1 //and one away
+        }).min_by_key(|e| (e.health, e.location.1, e.location.0)).unwrap()
+}
+
 fn exercise_1(map: Vec<Vec<bool>>, mut entities: Vec<Entity>) -> usize {
+    let mut goblins = entities.iter().filter(|e| e.entity_type == Type::Goblin).count();
+    let mut elves = entities.iter().filter(|e| e.entity_type == Type::Elf).count();
 
     for i in 0.. {                
-        entities.sort_by_key(|e| {
-            (e.location.1, e.location.0)
-        });
+        entities.sort_by_key(|e| { (e.location.1, e.location.0) });
+        
         for entity_id in 0..entities.len() {
-            // Find path to closest enemy
-
-            if entities[entity_id].health <= 0 {
+            let entity = &entities[entity_id];
+            if entity.health <= 0 {
                 continue;
             }
             
-            let path = {
-                let entity = &entities[entity_id];
-                let targets: Vec<_> = entities.iter().filter(|e| { e.entity_type != entity.entity_type && e.health > 0}).map(|e| e.location).collect();
-                let objects: Vec<_> = entities.iter().enumerate().filter(|(i, e)| *i != entity_id && e.health > 0).map(|e| e.1.location).collect();
-                pathfinding::find_path(&map, entity.location, &targets, &objects)
-            };            
+            let path = find_path(&map, &entities, entity);
 
             if path.len() > 2 {
                 entities[entity_id].location = path[1];
             }
+            let entity = entities[entity_id].clone();
 
             // Check enemies
+            
             if path.len() == 2 || path.len() == 3 {                
-                let ent = entities[entity_id].clone();                                
-                entities.iter_mut().filter(|e| {
-                    e.entity_type != ent.entity_type //find enemy entities
-                    && e.health > 0 // that are alive
-                    && manhattan(e.location, ent.location) == 1 //and one away
-                    }).min_by_key(|e| (e.health, e.location.1, e.location.0)).unwrap().health -= 3;
+                let oth = get_enemy_mut(&entity, &mut entities);
+                oth.health -= 3;
 
-                if entities.iter().filter(|e| e.entity_type != ent.entity_type && e.health > 0).count() == 0 {
+                if oth.health <= 0 {
+                    match oth.entity_type {
+                        Type::Elf => elves -= 1,
+                        Type::Goblin => goblins -= 1,
+                    }
+                }           
+
+                if elves == 0 || goblins == 0 {
                     let sum: usize = entities.iter()
-                        .filter(|e| e.entity_type == ent.entity_type && e.health >= 0)
+                        .filter(|e| e.entity_type == entity.entity_type && e.health >= 0)
                         .map(|e| e.health as usize)
                         .sum();
 
@@ -188,14 +203,9 @@ fn exercise_1(map: Vec<Vec<bool>>, mut entities: Vec<Entity>) -> usize {
                         i
                     };
                     return sum * round;
-                }                
-                //println!("{:?}: {} -> {}", oth.entity_type, oth.health + 3, oth.health);
-                
+                }
             }
         }
-
-        //println!("Round: {}", (i+1));
-        //pretty_print(&map, &entities);
     }
 
     unreachable!()
@@ -208,73 +218,54 @@ fn exercise_2(map: Vec<Vec<bool>>, entities: Vec<Entity>) -> (usize, i32) {
     loop {
         let next_attack = (lower_bound + upper_bound) / 2;        
 
-        if lower_bound == next_attack || upper_bound == next_attack {
-            //println!("> {:?}", (exercise_2_help(&map, entities.clone(), lower_bound), lower_bound));
+        if lower_bound == next_attack || upper_bound == next_attack {            
             return (exercise_2_help(&map, entities.clone(), upper_bound).unwrap(), upper_bound);
         }
-        if let Some(_) = exercise_2_help(&map, entities.clone(), next_attack) {                 
-            upper_bound = next_attack;            
 
+        if let Some(_) = exercise_2_help(&map, entities.clone(), next_attack) {                 
+            upper_bound = next_attack;
         } else {            
             lower_bound = next_attack;
         }        
     }
 }
 
-
 fn exercise_2_help(map: &Vec<Vec<bool>>, mut entities: Vec<Entity>, elf_attack: i32) -> Option<usize> {
+    let mut goblins = entities.iter().filter(|e| e.entity_type == Type::Goblin).count();    
     for i in 0.. {                
-        entities.sort_by_key(|e| { //Sort by y and then by x
-            (e.location.1, e.location.0)
-        });
+        //Sort by y and then by x
+        entities.sort_by_key(|e| { (e.location.1, e.location.0) });
 
         for entity_id in 0..entities.len() {             
             if entities[entity_id].health <= 0 { //If this entity is dead, continue
                 continue;
             }
 
-            let path = { // Find path to closest enemy            
-                let targets: Vec<_> = entities.iter().filter(|e| { 
-                    e.entity_type != entities[entity_id].entity_type
-                    && e.health > 0}).map(|e| e.location).collect();
-                let objects: Vec<_> = entities.iter().filter(|e|                     
-                    e.health > 0).map(|e| e.location).collect();
-                pathfinding::find_path(&map, entities[entity_id].location, &targets, &objects)
-            };            
-
+            let path = find_path(&map, &entities, &entities[entity_id]);
             if path.len() > 2 {
                 entities[entity_id].location = path[1];
             }
 
             // Check enemies
+            let entity = entities[entity_id].clone();
             if path.len() == 2 || path.len() == 3 {                
-                let ent = entities[entity_id].clone();                                
-                let ref mut oth = entities.iter_mut().filter(|e| {
-                    e.entity_type != ent.entity_type //find enemy entities
-                    && e.health > 0 // that are alive
-                    && manhattan(e.location, ent.location) == 1 //and one away
-                    }).min_by_key(|e| (e.health, e.location.1, e.location.0)).unwrap();
+                let oth = get_enemy_mut(&entity, &mut entities);
 
-                oth.health -= if ent.entity_type == Type::Elf && oth.entity_type == Type::Goblin {
-                    elf_attack
-                } else {
-                    3
+                oth.health -= match entity.entity_type {
+                    Type::Elf => elf_attack,
+                    Type::Goblin => 3
                 };
 
-                assert!(oth.entity_type != ent.entity_type);
-                if oth.entity_type == Type::Elf {
-                    assert!((200 - oth.health) % 3 == 0);
-                } else {
-                    assert!((200 - oth.health) % elf_attack == 0);
-                }
+                if oth.health <= 0 {
+                    match oth.entity_type {
+                        Type::Elf => return None,
+                        Type::Goblin => goblins -= 1,
+                    }
+                }           
 
-                if oth.entity_type == Type::Elf && oth.health <= 0 { //Elf dies, no solution                    
-                    return None;
-                }
-
-                if entities.iter().filter(|e| e.entity_type != ent.entity_type && e.health > 0).count() == 0 {
+                if goblins == 0 {
                     let sum: usize = entities.iter()
-                        .filter(|e| e.entity_type == ent.entity_type && e.health > 0)
+                        .filter(|e| e.entity_type == Type::Elf && e.health > 0)
                         .map(|e| e.health as usize)
                         .sum();
 
