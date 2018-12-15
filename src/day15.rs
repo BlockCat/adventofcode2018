@@ -27,14 +27,15 @@ mod pathfinding {
     pub fn find_path(map: &Vec<Vec<bool>>, (s_x, s_y): Location, targets: &[Location], entities: &[Location]) -> Vec<Location> {        
         use std::collections::BinaryHeap;
         use std::cmp::Reverse;
-        
+
         let mut queue: BinaryHeap<Reverse<_>> = BinaryHeap::new();
         queue.push(Reverse((0, s_y, s_x)));
 
         let mut visited: HashMap<Location, Option<Direction>> = HashMap::new();
         visited.insert((s_x, s_y), None);
+        
         let targets: HashSet<Location> = targets.iter().cloned().collect();
-        let entities: std::collections::HashSet<Location> = entities.iter().cloned().collect();
+        let entities: HashSet<Location> = entities.iter().cloned().collect();
 
         let mut max_size = 1000;
         let mut destos = Vec::new();
@@ -48,13 +49,11 @@ mod pathfinding {
 
             for direction in vec![Direction::North, Direction::West, Direction::East, Direction::South] {
                 let next_pos = (x, y) + direction;
-
-                let is_wall = !map[next_pos.1][next_pos.0]; // Remember that wall map is transposed
-                let is_visited = visited.contains_key(&next_pos);
                 let is_target = targets.contains(&next_pos);
-                let is_other = entities.contains(&next_pos);
                 let is_too_long = size + 1 > max_size;
-
+                let is_visited = visited.contains_key(&next_pos);
+                let is_wall = !map[next_pos.1][next_pos.0]; // Remember that wall map is transposed
+                let is_other = entities.contains(&next_pos);
                 
                 if is_target && !is_too_long {
                     if !is_visited {
@@ -70,20 +69,12 @@ mod pathfinding {
                     queue.push(Reverse((size + 1, next_pos.1, next_pos.0)));
                 }                
             }
-
-            /*queue.sort_by_key(|&((x, y), size)| {
-               (-size, -(y as isize), -(x as isize))
-            });*/
         }
 
-        destos.sort_by_key(|&(x, y)| (y, x));
-        destos.dedup();        
-
-        if destos.len() > 0 {
-            return rebuild_path(destos[0], visited);
+        match destos.iter().min_by_key(|&(x, y)| (y, x)) {
+            Some(dest) => rebuild_path(*dest, visited),
+            None => vec!((s_x, s_y))
         }
-
-        vec!((s_x, s_y))
     }
 
     fn rebuild_path(mut target: Location, visited: HashMap<Location, Option<Direction>>) -> Vec<Location> {
