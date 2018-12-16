@@ -55,4 +55,7 @@ test day14::tests::day14_bench_ex2 ... bench: 168,918,650 ns/iter (+/- 3,944,586
 
 test day15::tests::day15_bench_ex1 ... bench:  21,467,650 ns/iter (+/- 2,138,195)
 test day15::tests::day15_bench_ex2 ... bench:  59,974,530 ns/iter (+/- 533,632)
+
+test day16::tests::day16_bench_ex1 ... bench:      71,706 ns/iter (+/- 3,447)
+test day16::tests::day16_bench_ex2 ... bench:     714,985 ns/iter (+/- 81,466)
 ```
