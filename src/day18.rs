@@ -5,7 +5,7 @@ use hashbrown::HashMap;
 pub fn execute_exercises() {
     let (map, w, h) = parse_input(include_str!("../input/day18_in.txt"));
     println!("10 minutes: {}", exercise_1(map.clone(), (w, h)));
-    println!("may more minutes: {}", exercise_2(map.clone(), (w, h)));
+    println!("may more minutes: {}", exercise_2_cpu(map.clone(), (w, h)));
 }
 
 const PROGRAM: &str = r#"
@@ -137,6 +137,10 @@ fn exercise_2_cpu(mut map: Vec<u8>, (w, h): (usize, usize)) -> usize {
 
     for i in 0..cycles {               
         map = do_cycle(map, (w, h));
+
+        //pretty_print(&map, (w, h));        
+        //use std::{thread, time};
+        //thread::sleep(time::Duration::from_millis(10));
         if let Some(old) = ccc.insert(map.clone(), i) {
             println!("cycle found: {} -> {}", old, i);
         
@@ -144,10 +148,10 @@ fn exercise_2_cpu(mut map: Vec<u8>, (w, h): (usize, usize)) -> usize {
             let cycle_size = i - old;
             let cycles = remaining % cycle_size;
             for _ in 0..cycles {
-                map = do_cycle(map, (w, h));
+                map = do_cycle(map, (w, h));                
             }
             break;
-        }        
+        }
     }
     
     let trees = map.iter().filter(|&s| *s == b'|').count();
@@ -205,6 +209,13 @@ fn exercise_2(map: Vec<u8>, dim: (usize, usize)) -> usize {
 }
 
 fn pretty_print(map: &Vec<u8>, (width, height): (usize, usize)) {
+    let grid = (1..height-1).flat_map(|y| {
+        let begin = y * width;
+        (&map[begin..begin+width]).iter().map(|u| *u as char).chain(vec!('\n'))
+    }).collect::<String>();
+
+    println!("{}", grid);
+    /*
     for y in 1..height-1 {
         for x in 1..width-1 {
             match map[x + y * width] {
@@ -214,7 +225,7 @@ fn pretty_print(map: &Vec<u8>, (width, height): (usize, usize)) {
             }
         }
         println!();
-    }
+    }*/
 }
 
 
