@@ -337,6 +337,11 @@ y=13, x=498..504";
     }
 
     #[bench]
+    fn day17_bench_read(b: &mut Bencher) {
+        b.iter(|| parse_input(include_str!("../input/day17_in.txt")));
+    }
+
+    #[bench]
     fn day17_bench_ex1(b: &mut Bencher) {
         let (mapping, min_y, max_y) = parse_input(include_str!("../input/day17_in.txt"));
         b.iter(|| exercise_1(mapping.clone(), (min_y, max_y)));        

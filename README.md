@@ -61,4 +61,9 @@ test day16::tests::day16_bench_ex2 ... bench:     714,985 ns/iter (+/- 81,466)
 
 test day17::tests::day17_bench_ex1 ... bench:   2,517,960 ns/iter (+/- 211,187)
 test day17::tests::day17_bench_ex2 ... bench:   2,547,990 ns/iter (+/- 193,829)
+
+test day18::tests::day18_bench_ex1     ... bench:  95,925,590 ns/iter (+/- 10,913,841)
+test day18::tests::day18_bench_ex1_cpu ... bench:     378,960 ns/iter (+/- 6,394)
+test day18::tests::day18_bench_ex2     ... bench: 148,032,800 ns/iter (+/- 14,556,801)
+test day18::tests::day18_bench_ex2_cpu ... bench:  19,804,000 ns/iter (+/- 379,598)
 ```
