@@ -91,6 +91,7 @@ pub fn execute_exercises() {
     // Note the instructions in the register.
     // Find cycles and conditions for these cycles. (they are linear)
     // edit register to match conditions.
+    //
     
     
 }
