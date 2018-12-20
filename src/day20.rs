@@ -18,6 +18,29 @@ enum Direction {
     N, E, S, W
 }
 
+impl From<&Direction> for u8 {
+    fn from(f: &Direction) -> u8 {
+        match f {
+            Direction::N => 1,
+            Direction::E => 2,
+            Direction::S => 4,
+            Direction::W => 8,
+        }
+    }
+}
+
+impl From<char> for Direction {
+    fn from(c: char) -> Direction {
+        match c {
+            'N' => Direction::N,
+            'E' => Direction::E,
+            'S' => Direction::S,
+            'W' => Direction::W,
+            _ => panic!("Invalid character")
+        }
+    }
+}
+
 impl Add<Direction> for Location {
     type Output = Location;
 
@@ -40,25 +63,10 @@ fn parse_input(input: &str) -> HashMap<Location, u8> {
 
     for c in input.chars() {
         match c {
-            'N' => {
-                *map.entry(loc).or_insert(0u8) |= 1;
-                loc = loc + Direction::N;
-                *map.entry(loc).or_insert(0u8) |= 4;
-            }
-            'E' => {
-                *map.entry(loc).or_insert(0u8) |= 2;
-                loc = loc + Direction::E;
-                *map.entry(loc).or_insert(0u8) |= 8;
-            }
-            'S' => {
-                *map.entry(loc).or_insert(0u8) |= 4;
-                loc = loc + Direction::S;
-                *map.entry(loc).or_insert(0u8) |= 1;
-            }
-            'W' => {
-                *map.entry(loc).or_insert(0u8) |= 8;
-                loc = loc + Direction::W;
-                *map.entry(loc).or_insert(0u8) |= 2;
+            'N'| 'E' | 'S' | 'W' => {
+                let direction = Direction::from(c);
+                *map.entry(loc).or_insert(0u8) |= u8::from(&direction);
+                loc = loc + direction;                
             }
             '(' => {
                 stack.push_front(loc);
@@ -87,24 +95,15 @@ fn exercise_1(input: HashMap<Location, u8>) -> (usize, usize) {
 
         let odist = distances.entry(loc).or_insert(std::usize::MAX);
 
-        if dist > *odist {
-            continue;
-        } else {
-            *odist = dist;
-        }
+        if dist < *odist {
+            *odist = dist;        
 
-        if let Some(d) = input.get(&loc) {
-            if d & 1 > 0 {
-                queue.push_back((dist + 1, loc + Direction::N));
-            }
-            if d & 2 > 0 {
-                queue.push_back((dist + 1, loc + Direction::E));
-            }
-            if d & 4 > 0 {
-                queue.push_back((dist + 1, loc + Direction::S));
-            }
-            if d & 8 > 0 {
-                queue.push_back((dist + 1, loc + Direction::W));
+            if let Some(directions) = input.get(&loc) {
+                for direction in vec![Direction::N, Direction::E, Direction::S, Direction::W] {                
+                    if *directions & u8::from(&direction) > 0 {
+                        queue.push_back((dist + 1, loc + direction));
+                    }
+                }
             }
         }
     }
