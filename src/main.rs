@@ -3,7 +3,7 @@
 extern crate test;
 extern crate hashbrown;
 extern crate rayon;
-extern crate ocl;
+
 
 macro_rules! run {
     ($($x:ident), *) => {

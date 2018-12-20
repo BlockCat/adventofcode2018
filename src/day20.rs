@@ -1,10 +1,13 @@
 use std::ops::Add;
 use hashbrown::HashMap;
+use std::collections::VecDeque;
 
 pub fn execute_exercises() {
     let samples = parse_input(include_str!("../input/day20_in.txt"));
     //println!("{:?}", samples);
-    println!("Distance: {}", exercise_1(samples));
+    let result = exercise_1(samples);
+    println!("Distance: {}", result.0);
+    println!("more than 1000: {}", result.1);
     
 }
 
@@ -29,120 +32,122 @@ impl Add<Direction> for Location {
     }
 }
 
-#[derive(Debug)]
-struct Tree {
-    id: usize,
-    path: Vec<Direction>,
-    children: Vec<usize>,
-    parent: Vec<usize>,
+fn parse_input(input: &str) -> HashMap<Location, u8> {
+    let mut stack = VecDeque::new();
+    let mut loc = (0isize, 0isize);
+    let mut map = HashMap::new();
+    stack.push_front(loc);
+
+    for c in input.chars() {
+        match c {
+            'N' => {
+                *map.entry(loc).or_insert(0u8) |= 1;
+                loc = loc + Direction::N;
+                *map.entry(loc).or_insert(0u8) |= 4;
+            }
+            'E' => {
+                *map.entry(loc).or_insert(0u8) |= 2;
+                loc = loc + Direction::E;
+                *map.entry(loc).or_insert(0u8) |= 8;
+            }
+            'S' => {
+                *map.entry(loc).or_insert(0u8) |= 4;
+                loc = loc + Direction::S;
+                *map.entry(loc).or_insert(0u8) |= 1;
+            }
+            'W' => {
+                *map.entry(loc).or_insert(0u8) |= 8;
+                loc = loc + Direction::W;
+                *map.entry(loc).or_insert(0u8) |= 2;
+            }
+            '(' => {
+                stack.push_front(loc);
+            }
+            '|' => {
+                loc = *stack.front().unwrap();
+            }
+            ')' => {
+                loc = stack.pop_front().unwrap();
+            }
+            _ => unreachable!()
+        }
+    }
+
+    map
 }
 
-impl Tree {
+fn exercise_1(input: HashMap<Location, u8>) -> (usize, usize) {
+    
+    let mut queue = VecDeque::new();
+    let mut distances = HashMap::new();
+    queue.push_front((0, (0, 0)));
 
-    fn new(id: usize, parent: Option<usize>) -> Tree {
-        Tree {
-            id: id,
-            path: vec!(),
-            children: vec!(),
-            parent: match parent {
-                Some(b) => vec!(b),
-                None => vec!()
+    while !queue.is_empty() {
+        let (dist, loc) = queue.pop_front().unwrap();
+
+        let odist = distances.entry(loc).or_insert(std::usize::MAX);
+
+        if dist > *odist {
+            continue;
+        } else {
+            *odist = dist;
+        }
+
+        if let Some(d) = input.get(&loc) {
+            if d & 1 > 0 {
+                queue.push_back((dist + 1, loc + Direction::N));
+            }
+            if d & 2 > 0 {
+                queue.push_back((dist + 1, loc + Direction::E));
+            }
+            if d & 4 > 0 {
+                queue.push_back((dist + 1, loc + Direction::S));
+            }
+            if d & 8 > 0 {
+                queue.push_back((dist + 1, loc + Direction::W));
             }
         }
     }
 
-    fn push(&mut self, direction: Direction) -> usize {
-        self.path.push(direction);
-        self.id
-    }
+    (distances.values().cloned().max().unwrap(), 
+    distances.values().cloned().filter(|&v| v >= 1000).count())
 }
 
-fn parse_input(input: &str) -> Vec<Tree> {
-    use std::collections::VecDeque;
+fn pretty_print(map: &HashMap<Location, u8>) {
+    let minx = map.iter().map(|(l, _)| l.0).min().unwrap() as isize;
+    let maxx = map.iter().map(|(l, _)| l.0).max().unwrap() as isize;
+    let miny = map.iter().map(|(l, _)| l.1).min().unwrap() as isize;
+    let maxy = map.iter().map(|(l, _)| l.1).max().unwrap() as isize;
 
-    
-    //let mut path = Vec::new();
-    let mut id = 0;
-    let mut nodes: Vec<Tree> = Vec::new();
-    let mut tree = id;
-
-    nodes.push(Tree::new(id, None));
-    id += 1;
-
-    
-
-    for c in input.chars() {
-        tree = match c {
-            'N' => nodes[tree].push(Direction::N),
-            'E' => nodes[tree].push(Direction::E),
-            'S' => nodes[tree].push(Direction::S),
-            'W' => nodes[tree].push(Direction::W),
-            '(' => {
-                let c = Tree::new(id, Some(tree));
-                id += 1;
-                nodes.push(c);
-                nodes[tree].children.push(id - 1);
-
-                id - 1
-            },
-            '|' => {
-                let parent = nodes[tree].parent[0];
-                let c = Tree::new(id, Some(parent));
-                nodes.push(c);
-                id += 1;
-
-                nodes[parent].children.push(id - 1);
-                
-                id - 1
-            },
-            ')' => {
-                let parent = nodes[tree].parent[0];
-                let mut c = Tree::new(id, None);
-                c.parent = nodes[parent].children.clone();
-
-                for child in &c.parent {
-                    nodes[*child].children.push(c.id);
+    let s: String = (miny..=maxy).map(|y| {
+        (minx..=maxx).map(move |x| {
+            match map.get(&(x, y)) {
+                Some(0) => ' ', //0000
+                Some(1) => '╵', //0001
+                Some(2) => '╶',//0010
+                Some(3) => '└',//0011
+                Some(4) => '╷',//0100
+                Some(5) => '│',//0101
+                Some(6) => '┌',//0110
+                Some(7) => '├',//0111
+                Some(8) => '╴',//1000
+                Some(9) => '┘',//1001
+                Some(10) => '─', //1010
+                Some(11) => '┴', //1011
+                Some(12) => '┐', //1100
+                Some(13) => '┤', //1101
+                Some(14) => '┬', //1110
+                Some(15) => '┼',
+                None => ' ',
+                _ => {
+                    println!("error: {:?}", map.get(&(x, y)));
+                    unreachable!()
                 }
+            }
+        }).chain(vec!('\n'))
+    }).flatten().collect();
 
-                nodes.push(c);
-                id += 1;               
-
-                id - 1
-            },
-            _ => unreachable!()
-        };
-    }
-
-    nodes
-}
-
-fn create_map(node: usize, mut dist: usize, mut loc: Location, input: &Vec<Tree>, map: &mut HashMap<Location, usize>) {        
-    // The distance can probably be done directly by keeping track of the distance it took to that square.
-    // Add children of node 
-    
-    for d in &input[node].path {        
-        loc = loc + d.clone();
-        dist += 1;
-
-        let odist = map.entry(loc).or_insert(std::usize::MAX);
-        *odist= std::cmp::min(*odist, dist);
-    }
-
-    // split on children
-    for c in &input[node].children {
-        create_map(*c, dist, loc, input, map);
-    }
-
-    
-}
-
-fn exercise_1(input: Vec<Tree>) -> usize {
-    let mut mapping = HashMap::new();
-    mapping.insert((0, 0), 0);
-    create_map(0, 0, (0, 0), &input, &mut mapping);
-
-
-    *mapping.values().max().unwrap()
+    println!("{}", s);
 }
 
 
@@ -154,27 +159,32 @@ mod tests {
     #[test]
     fn day19_ex1_s1() {
        let input = r"ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN";
-        let input = parse_input(input);
-        println!("{:?}", input);
+        let input = parse_input(input);        
         let result = exercise_1(input);
-        assert_eq!(result, 18);
+        assert_eq!(result, (18, 0));
     }
 
     #[test]
     fn day19_ex1_s2() {
        let input = r"ENWWW(NEEE|SSE(EE|N))";
-        let input = parse_input(input);
-        println!("{:?}", input);
+        let input = parse_input(input);        
         let result = exercise_1(input);
-        assert_eq!(result, 10);
+        assert_eq!(result, (10, 0));
     }
 
     #[test]
     fn day19_ex1_s3() {
        let input = r"WNE";
-        let input = parse_input(input);
-        println!("{:?}", input);
+        let input = parse_input(input);        
         let result = exercise_1(input);
-        assert_eq!(result, 3);
+        assert_eq!(result, (3, 0));
+    }
+
+    #[test]
+    fn day19_ex1_s4() {
+        let samples = parse_input(include_str!("../input/day20_in.txt"));
+        //pretty_print(&samples);
+        let result = exercise_1(samples);
+        assert_eq!(result, (4186, 8466));
     }
 }
