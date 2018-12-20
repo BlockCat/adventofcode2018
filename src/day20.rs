@@ -3,13 +3,14 @@ use hashbrown::HashMap;
 
 pub fn execute_exercises() {
     let samples = parse_input(include_str!("../input/day20_in.txt"));
-    //println!("Amount: {}", exercise_1([0; 6], samples.clone()));
+    println!("{:?}", samples);
+    println!("Distance: {}", exercise_1(samples));
     
 }
 
-type Location = (usize, usize);
+type Location = (isize, isize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Direction {
     N, E, S, W
 }
@@ -20,10 +21,10 @@ impl Add<Direction> for Location {
     fn add(self, other: Direction) -> Location {
         let (x, y) = self;
         match other {
-            Direction::N => (x, y.saturating_sub(1)),
+            Direction::N => (x, y - 1),
             Direction::S => (x, y + 1),
             Direction::E => (x + 1, y),
-            Direction::W => (x.saturating_sub(1), y)
+            Direction::W => (x - 1 , y)
         }
     }
 }
@@ -115,10 +116,12 @@ fn parse_input(input: &str) -> Vec<Tree> {
     nodes
 }
 
-fn create_map(mut node: usize, mut loc: Location, input: &Vec<Tree>, map: &mut HashMap<(usize, usize), Vec<Direction>>) {        
+fn create_map(mut node: usize, mut loc: Location, input: &Vec<Tree>, map: &mut HashMap<Location, Vec<Direction>>) {        
+    // The distance can probably be done directly by keeping track of the distance it took to that square.
     // Add children of node 
     for d in &input[node].path {
-
+        map.entry(loc).or_insert(vec!()).push(d.clone());
+        loc = loc + d.clone();
     }
 
     // split on children
