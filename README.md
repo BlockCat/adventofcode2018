@@ -66,4 +66,7 @@ test day18::tests::day18_bench_ex1     ... bench:  95,925,590 ns/iter (+/- 10,91
 test day18::tests::day18_bench_ex1_cpu ... bench:     378,960 ns/iter (+/- 6,394)
 test day18::tests::day18_bench_ex2     ... bench: 148,032,800 ns/iter (+/- 14,556,801)
 test day18::tests::day18_bench_ex2_cpu ... bench:  19,804,000 ns/iter (+/- 379,598)
+
+test day20::tests::day20_bench_ex12 ... bench:     960,695 ns/iter (+/- 50,461)
+test day20::tests::day20_bench_read ... bench:     358,315 ns/iter (+/- 50,063)
 ```
