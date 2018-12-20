@@ -3,7 +3,7 @@ use hashbrown::HashMap;
 
 pub fn execute_exercises() {
     let samples = parse_input(include_str!("../input/day20_in.txt"));
-    println!("{:?}", samples);
+    //println!("{:?}", samples);
     println!("Distance: {}", exercise_1(samples));
     
 }
@@ -116,27 +116,33 @@ fn parse_input(input: &str) -> Vec<Tree> {
     nodes
 }
 
-fn create_map(mut node: usize, mut loc: Location, input: &Vec<Tree>, map: &mut HashMap<Location, Vec<Direction>>) {        
+fn create_map(node: usize, mut dist: usize, mut loc: Location, input: &Vec<Tree>, map: &mut HashMap<Location, usize>) {        
     // The distance can probably be done directly by keeping track of the distance it took to that square.
     // Add children of node 
-    for d in &input[node].path {
-        map.entry(loc).or_insert(vec!()).push(d.clone());
+    
+    for d in &input[node].path {        
         loc = loc + d.clone();
+        dist += 1;
+
+        let odist = map.entry(loc).or_insert(std::usize::MAX);
+        *odist= std::cmp::min(*odist, dist);
     }
 
     // split on children
     for c in &input[node].children {
-        create_map(*c, loc, input, map);
+        create_map(*c, dist, loc, input, map);
     }
+
+    
 }
 
-fn exercise_1(input: Vec<Tree>) -> i64 {
+fn exercise_1(input: Vec<Tree>) -> usize {
     let mut mapping = HashMap::new();
-    create_map(0, (0, 0), &input, &mut mapping);
+    mapping.insert((0, 0), 0);
+    create_map(0, 0, (0, 0), &input, &mut mapping);
 
 
-    0
-    
+    *mapping.values().max().unwrap()
 }
 
 
@@ -147,10 +153,28 @@ mod tests {
 
     #[test]
     fn day19_ex1_s1() {
-       let input = r"WNE(N|(NE|EN))";
+       let input = r"ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN";
         let input = parse_input(input);
         println!("{:?}", input);
-        //let result = exercise_1([0; 6], input);
-        //assert_eq!(result, 6);
+        let result = exercise_1(input);
+        assert_eq!(result, 18);
+    }
+
+    #[test]
+    fn day19_ex1_s2() {
+       let input = r"ENWWW(NEEE|SSE(EE|N))";
+        let input = parse_input(input);
+        println!("{:?}", input);
+        let result = exercise_1(input);
+        assert_eq!(result, 10);
+    }
+
+    #[test]
+    fn day19_ex1_s3() {
+       let input = r"WNE";
+        let input = parse_input(input);
+        println!("{:?}", input);
+        let result = exercise_1(input);
+        assert_eq!(result, 3);
     }
 }
