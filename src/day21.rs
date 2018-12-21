@@ -131,7 +131,7 @@ fn parse_input(input: &str) -> Vec<Instruction> {
 
 
 
-fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usize) -> i64 {
+fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: u64) -> i64 {
     let mut instruction_register = 0;
     match input[0] {
         Instruction::Binding(i) => instruction_register = i,
@@ -140,12 +140,55 @@ fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usiz
 
     let input = &input[1..];
 
+    let mut laster: (u64, Register) = (counter, register.clone());
+
     loop {
         if let Instruction::Instruction(f, r, a, b, c) = &input[register[instruction_register as usize] as usize] {            
+            println!("{}: {:?} ({}: {}, {}, {}) ->", counter, register, r, a, b, c);
             
-            print!("{:?} ({}: {}, {}, {}) ->", register, r, a, b, c);
-            register = f([0, *a, *b, *c], register);
-            counter += 1;
+            match &r[..] {
+                "gtir" | "gtri" | "gtrr" | "eqir" |"eqri" | "eqrr"  => {
+                    if &r[..] == "eqrr" {
+                        return register[1];
+                    }
+                    // Check if this one is the same instruction as last one
+                    if laster.1[instruction_register as usize] == register[instruction_register as usize] {
+                        let dif = register.iter().zip(laster.1.iter()).map(|(a, b)| a - b).collect::<Vec<_>>();
+                        //println!("{}: {:?} -> {}: {:?} = {:?}", laster.0, laster.1, counter, register, dif);
+
+                        match &r[..] {
+                            "gtrr" => {
+                                
+                                // Increasing line starting y_1 = laster[a] + i * dif[a]
+                                // increasing line starting y_2 = laster[b] + i * dif[b]
+                                // Find intersection
+                                // (laster[a] - laster[b]) + i * (dif[a] - dif[b]) = 0                                
+                                // find i
+                                // i = (laster[b] - laster[a]) / (dif[a] - dif[b])
+                                let times_to_go = (laster.1[*b as usize] - laster.1[*a as usize]) / (dif[*a as usize] - dif[*b as usize]);
+                                //println!("For a gtrr between {} > {}, needed: {}", register[*a as usize], register[*b as usize], times_to_go);
+                                counter += (counter - laster.0) * times_to_go as u64;
+
+                                for (i, m) in register.clone().iter().zip(dif.iter()).map(|(a, b)| a + b*times_to_go).enumerate() {
+                                    register[i] = m as i64;
+                                }
+                                //continue;
+                            }
+
+                            _ => panic!()
+                        }
+                        
+                    }                    
+                    laster = (counter, register.clone());
+
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;
+                }
+                _ => {                    
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;        
+                }
+            }            
             
             // If the program was one of the boolean operations.
             // Then we might have gotten into a loop.
@@ -155,7 +198,7 @@ fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usiz
             
         
 
-            println!(" {:?}: {}", register, counter);
+            //println!(" {:?}: {}", register, counter);
             
             if register[instruction_register as usize] + 1  < input.len() as i64 {
                 register[instruction_register as usize] += 1;            
@@ -166,8 +209,8 @@ fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usiz
         } else {
             unreachable!()
         }        
-        use std::{thread, time};
-        thread::sleep(time::Duration::from_millis(1));
+        //use std::{thread, time};
+        //thread::sleep(time::Duration::from_millis(1));
 
         
     }
