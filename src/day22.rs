@@ -1,4 +1,5 @@
 use std::ops::Add;
+use std::ops::Index;
 
 pub fn execute_exercises() {
     println!("Risk index: {}", exercise_1(4845, (6, 770))); // 4677 too low
@@ -20,6 +21,8 @@ impl Soil {
             Soil::Narrow => tool == &Tool::Torch || tool == &Tool::Neither
         }
     }
+
+
 }
 
 #[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
@@ -52,9 +55,9 @@ impl Add<Direction> for Location {
     }
 }
 
-#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Hash, Debug)]
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Debug)]
 enum Tool {
-    Gear, Torch, Neither
+    Gear = 0, Torch = 1, Neither = 2
 }
 
 impl From<Soil> for u64 {
@@ -100,14 +103,13 @@ fn exercise_1(depth: u32, location: Location) -> u64 {
 
 fn exercise_2(depth: u32, target: Location, (width, height): (usize, usize)) -> u32 {
     use std::collections::BinaryHeap;
-    use hashbrown::HashMap;
     use std::cmp::Reverse;
 
     //let width =  (target.0 + 1) * 2;
     //let height = (target.1 + 1) * 2;
 
     let mut map =       vec!(vec!((Soil::Rocky, 0); width); height);
-    let mut visited =   vec!(vec!(HashMap::new(); width); height);
+    let mut visited =   vec!(vec!([std::u32::MAX - 7; 3]; width); height);
 
     map[0][0] = (match depth % 3 {
             0 => Soil::Rocky,
@@ -125,52 +127,56 @@ fn exercise_2(depth: u32, target: Location, (width, height): (usize, usize)) -> 
 
     while !heap.is_empty() {
         let (Reverse(minutes), location, tool) = heap.pop().unwrap();
-        
-        {
-            let e = visited[location.1][location.0].entry(tool.clone()).or_insert(std::u32::MAX);
-            if *e <= minutes + 7 {
-                continue;
-            }
-        }
-
-        visited[location.1][location.0].insert(tool.clone(), minutes);
 
         if location == target && tool == Tool::Torch {            
             return minutes;
         } else if location == target {
             heap.push((Reverse(minutes + 7), location, Tool::Torch));
             continue;
+        }        
+    
+        // If my current location has a shorter distance to this point with my tool....
+        let shortest_minutes = visited[location.1][location.0][tool.clone() as usize];
+        if shortest_minutes <= minutes {
+            continue;
         }
 
+        // If my current location has a shorter distance to this point with another tool (but change to my tool)
+        let shortest_minutes = visited[location.1][location.0].iter().min().unwrap();
+        if shortest_minutes + 7 <= minutes {
+            continue;
+        }       
+
+        visited[location.1][location.0][tool.clone() as usize] = minutes;
+        
         // Check north
-        let possible_directions = [Direction::N, Direction::E, Direction::S, Direction::W].into_iter().filter(|&d| {
+        let possible_directions = vec![Direction::N, Direction::E, Direction::S, Direction::W].into_iter().filter(|d| {
             match d {
-                &Direction::N => location.1 > 0,
-                &Direction::E => location.0 < map[0].len() - 1,
-                &Direction::S => location.1 < map.len() - 1,                
-                &Direction::W => location.0 > 0,                
+                Direction::N => location.1 > 0,
+                Direction::E => location.0 < map[0].len() - 1,
+                Direction::S => location.1 < map.len() - 1,                
+                Direction::W => location.0 > 0,                
             }
         });
 
         for dir in possible_directions {            
-            let next_loc = location + dir.clone();
+            let next_loc = location + dir;
 
             // Check if I can go to the next location with my current tool
             // This might need to change though
             if map[next_loc.1][next_loc.0].0.does_support(&tool) {                
                 heap.push((Reverse(minutes + 1), next_loc, tool.clone()));
-            } else {
-                let possible_tools = [Tool::Gear, Tool::Torch, Tool::Neither].into_iter().filter(|s| {
-                    map[next_loc.1][next_loc.0].0.does_support(&s)
-                    &&map[location.1][location.0].0.does_support(&s)
-                });
-
-                // Change to tool and go to next
-                //println!("---");
-                for tool in possible_tools {
-                    //println!("{:?}", tool);
-                    heap.push((Reverse(minutes + 8), next_loc, tool.clone()));
-                }
+            } else {                
+                let possible_tool = match (&map[location.1][location.0].0, &map[next_loc.1][next_loc.0].0) {
+                    (Soil::Rocky, Soil::Wet) => Tool::Gear,
+                    (Soil::Rocky, Soil::Narrow) => Tool::Torch,
+                    (Soil::Wet, Soil::Narrow) => Tool::Neither,
+                    (Soil::Wet, Soil::Rocky) => Tool::Gear,
+                    (Soil::Narrow, Soil::Rocky) => Tool::Torch,
+                    (Soil::Narrow, Soil::Wet) => Tool::Neither,
+                    _ => unreachable!()
+                };
+                heap.push((Reverse(minutes + 8), next_loc, possible_tool));
             }
         }
     }
