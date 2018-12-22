@@ -74,5 +74,6 @@ test day20::tests::day20_bench_read ... bench:     358,315 ns/iter (+/- 50,063)
 test day21::tests::day21_bench_ex1 ... bench:       2,936 ns/iter (+/- 248)
 test day21::tests::day21_bench_ex2 ... bench:  20,973,627 ns/iter (+/- 1,109,644)
 
-
+test day22::tests::day22_bench_ex1 ... bench:     285,130 ns/iter (+/- 6,042)
+test day22::tests::day22_bench_ex2 ... bench: 824,013,200 ns/iter (+/- 64,070,488)
 ```
