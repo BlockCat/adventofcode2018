@@ -83,7 +83,13 @@ enum Instruction {
 pub fn execute_exercises() {
     let samples = parse_input(include_str!("../input/day21_in.txt"));
     //println!("Amount: {}", exercise_1([0; 6], samples.clone()));
-    println!("Ex2: {}", exercise_1([0, 0, 0, 0, 0, 0], samples.clone(), 0));
+
+    
+    let result = exercise_2([0; 6], samples.clone(), 0);
+
+    println!("Part 1: {:?}", result.iter().min_by_key(|(value, &counter)| counter).unwrap());
+    println!("Part 2: {:?}", result.iter().max_by_key(|(value, &counter)| counter).unwrap());
+    //println!("Ex2: {}", exercise_1([0, 0, 0, 0, 0, 0], samples.clone(), 0));
     
     // The program basically takes the divisors of 10551355 and sums them.
     // We need to optimize the program...
@@ -131,7 +137,7 @@ fn parse_input(input: &str) -> Vec<Instruction> {
 
 
 
-fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usize) -> i64 {
+fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: u64) -> i64 {
     let mut instruction_register = 0;
     match input[0] {
         Instruction::Binding(i) => instruction_register = i,
@@ -140,22 +146,45 @@ fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usiz
 
     let input = &input[1..];
 
+    let mut laster: (u64, Register) = (counter, register.clone());
+    
     loop {
         if let Instruction::Instruction(f, r, a, b, c) = &input[register[instruction_register as usize] as usize] {            
-            
-            print!("{:?} ({}: {}, {}, {}) ->", register, r, a, b, c);
-            register = f([0, *a, *b, *c], register);
-            counter += 1;
-            
-            // If the program was one of the boolean operations.
-            // Then we might have gotten into a loop.
-            // Determine this loop
-            // If the register with the check is changed in the loop.            
-            // Fast forward.
-            
-        
+            match &r[..] {
+                "gtir" | "gtri" | "gtrr" | "eqir" |"eqri" | "eqrr"  => {                    
+                    if &r[..] == "eqrr" {
+                        return register[1];
+                    }
+                    if laster.1[instruction_register as usize] == register[instruction_register as usize] {
+                        let dif = register.iter().zip(laster.1.iter()).map(|(a, b)| a - b).collect::<Vec<_>>();
+                       
+                        match &r[..] {
+                            "gtrr" => {                       
+                                let times_to_go = (laster.1[*b as usize] - laster.1[*a as usize]) / (dif[*a as usize] - dif[*b as usize]);
+                                
+                                counter += (counter - laster.0) * times_to_go as u64;
 
-            println!(" {:?}: {}", register, counter);
+                                for (i, m) in register.clone().iter().zip(dif.iter()).map(|(a, b)| a + b*times_to_go).enumerate() {
+                                    register[i] = m as i64;
+                                }                                
+                            }
+
+                            _ => panic!()
+                        }
+                        
+                    }                    
+                    laster = (counter, register.clone());
+
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;
+                }
+                _ => {                    
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;        
+                }
+            }
+
+            //println!(" {:?}: {}", register, counter);
             
             if register[instruction_register as usize] + 1  < input.len() as i64 {
                 register[instruction_register as usize] += 1;            
@@ -166,14 +195,105 @@ fn exercise_1(mut register: Register, input: Vec<Instruction>, mut counter: usiz
         } else {
             unreachable!()
         }        
-        use std::{thread, time};
-        thread::sleep(time::Duration::from_millis(1));
+    }
+
+    println!("counter: {}", counter);
+    unreachable!()
+    //register[0]
+}
+
+use hashbrown::HashMap;
+fn exercise_2(mut register: Register, input: Vec<Instruction>, mut counter: u64) -> HashMap<i64, u64> {
+    
+
+    let mut instruction_register = 0;
+    match input[0] {
+        Instruction::Binding(i) => instruction_register = i,
+        _ => {}
+    }
+
+    let input = &input[1..];
+
+    let mut laster: (u64, Register) = (counter, register.clone());
+    let mut recurring = HashMap::new();    
+
+    let mut last_regi = register[1];
+    loop {
+        if let Instruction::Instruction(f, r, a, b, c) = &input[register[instruction_register as usize] as usize] {            
+            //println!("{}: {:?} ({}: {}, {}, {}) ->", counter, register, r, a, b, c);
+            
+            match &r[..] {
+                "gtir" | "gtri" | "gtrr" | "eqir" |"eqri" | "eqrr"  => {
+                    /*if &r[..] == "eqrr" {
+                        return register[1];
+                    }*/
+                    // Check if this one is the same instruction as last one
+                    if &r[..] == "eqrr" {
+                        
+                        if recurring.contains_key(&register[1]) {
+                            return recurring;
+                        } else {
+                            recurring.insert(register[1], counter);
+                        }
+                    }
+                    
+                    if laster.1[instruction_register as usize] == register[instruction_register as usize] {
+                        let dif = register.iter().zip(laster.1.iter()).map(|(a, b)| a - b).collect::<Vec<_>>();
+                        //println!("{}: {:?} -> {}: {:?} = {:?}", laster.0, laster.1, counter, register, dif);
+
+                        match &r[..] {
+                            "gtrr" => {
+                                
+                                // Increasing line starting y_1 = laster[a] + i * dif[a]
+                                // increasing line starting y_2 = laster[b] + i * dif[b]
+                                // Find intersection
+                                // (laster[a] - laster[b]) + i * (dif[a] - dif[b]) = 0                                
+                                // find i
+                                // i = (laster[b] - laster[a]) / (dif[a] - dif[b])
+                                let times_to_go = (laster.1[*b as usize] - laster.1[*a as usize]) / (dif[*a as usize] - dif[*b as usize]);
+                                //println!("For a gtrr between {} > {}, needed: {}", register[*a as usize], register[*b as usize], times_to_go);
+                                counter += (counter - laster.0) * times_to_go as u64;
+
+                                for (i, m) in register.clone().iter().zip(dif.iter()).map(|(a, b)| a + b*times_to_go).enumerate() {
+                                    register[i] = m as i64;
+                                }
+                                //continue;
+                            }
+
+                            _ => panic!()
+                        }
+                        
+                    }                    
+                    laster = (counter, register.clone());
+
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;
+                }
+                _ => {                    
+                    register = f([0, *a, *b, *c], register);
+                    counter += 1;        
+                }
+            }            
+            
+            
+            if register[instruction_register as usize] + 1  < input.len() as i64 {
+                register[instruction_register as usize] += 1;            
+            } else {
+                break;
+            }
+            
+        } else {
+            unreachable!()
+        }        
+        //use std::{thread, time};
+        //thread::sleep(time::Duration::from_millis(1));
 
         
     }
 
     println!("counter: {}", counter);
-    register[0]
+    unreachable!()
+    //register[0]
 }
 
 
@@ -182,18 +302,17 @@ mod tests {
     use super::*;
     use crate::test::Bencher;
 
-    #[test]
-    fn day19_ex1_s1() {
-       let input = r"#ip 0
-seti 5 0 1
-seti 6 0 2
-addi 0 1 0
-addr 1 2 3
-setr 1 0 0
-seti 8 0 4
-seti 9 0 5";
-        let input = parse_input(input);
-        let result = exercise_1([0; 6], input, 0);
-        assert_eq!(result, 6);
+    #[bench]
+    fn day21_bench_ex1(b: &mut Bencher) {
+        let samples = parse_input(include_str!("../input/day21_in.txt"));
+        b.iter(move || exercise_1([0; 6], samples.clone(), 0));       
+    }
+
+    #[bench]
+    fn day21_bench_ex2(b: &mut Bencher) {
+        let samples = parse_input(include_str!("../input/day21_in.txt"));
+        b.iter(move ||
+            exercise_2([0; 6], samples.clone(), 0).into_iter().max_by_key(|(value, counter)| *counter).unwrap()
+        );
     }
 }

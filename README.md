@@ -69,4 +69,10 @@ test day18::tests::day18_bench_ex2_cpu ... bench:  19,804,000 ns/iter (+/- 379,5
 
 test day20::tests::day20_bench_ex12 ... bench:     960,695 ns/iter (+/- 50,461)
 test day20::tests::day20_bench_read ... bench:     358,315 ns/iter (+/- 50,063)
+
+// No like for this day, hardcoded for my input
+test day21::tests::day21_bench_ex1 ... bench:       2,936 ns/iter (+/- 248)
+test day21::tests::day21_bench_ex2 ... bench:  20,973,627 ns/iter (+/- 1,109,644)
+
+
 ```
