@@ -54,10 +54,8 @@ impl Group {
 
 pub fn execute_exercises() {
     let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
-    println!("Units left of the winning team: {:?}", exercise_1(immune, infection)); // 4677 too low
-
-    //let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
-    //println!("Bots in range of max: {}", exercise_1(immune, infection)); // 4677 too low
+    println!("Units left of the winning team: {:?}", exercise_1(immune.clone(), infection.clone()));
+    println!("Boost needed and units then left: {:?}", exercise_2(immune.clone(), infection.clone()));
 }
 
 fn parse_input(input: &str) -> (Vec<Group>, Vec<Group>) {
@@ -177,6 +175,10 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>)-> (bool, u32)
 
         attack_order.sort_by_key(|(group, _)| Reverse(group.initiative));
 
+        if attack_order.is_empty() {
+            return (false, 0);
+        }
+
         for (group, target) in attack_order {
             if *group.units.borrow() <= 0 {continue;} //Check if current group is still alive
             
@@ -205,6 +207,7 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>)-> (bool, u32)
         if infections.is_empty() {
             return (true, immunes.iter().map(|s| *s.units.borrow()).sum());
         }
+
         //return 0;
     }
 }
@@ -219,18 +222,30 @@ fn exercise_1_boosted(mut immunes: Vec<Group>, infections: Vec<Group>, boost: u3
 
 fn exercise_2(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> (u32, u32) {
     let mut lower_boost = 1;
-    let mut boost = 1;
+    let mut upper_boost = 1;
 
-    while {
-        !exercise_1_boosted(immunes.clone(), infections.clone(), boost).0
-    }{
-        lower_boost = boost;
-        boost *= 2;
+    while !exercise_1_boosted(immunes.clone(), infections.clone(), upper_boost).0 {
+        lower_boost = upper_boost;
+        upper_boost *= 2;        
+    }    
+    
+    println!("Between: {} and {}", lower_boost, upper_boost);
+
+    while upper_boost - lower_boost > 1 {
+        let average = (lower_boost + upper_boost) / 2;
+
+        let (immune_win, _) = exercise_1_boosted(immunes.clone(), infections.clone(), average);
+
+        if immune_win { // It's between lower and average
+            upper_boost = average;
+        } else {
+            lower_boost = average;
+        }
     }
 
-    println!("Between: {} and {}", lower_boost, boost);
+    let (_, left) = exercise_1_boosted(immunes.clone(), infections.clone(), upper_boost);
 
-    0
+    (upper_boost, left)
 }
 
 
@@ -295,5 +310,28 @@ Infection:
         let result = exercise_2(immune, infection);
 
         assert_eq!(result, (1570, 51));
+    }
+
+    #[test]
+    fn day24_ex2_s2() {
+        let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
+        assert_eq!(exercise_2(immune, infection), (46, 6221));
+    }
+
+    #[bench]    
+    fn day24_bench_read(b: &mut Bencher) {        
+        b.iter(|| parse_input(include_str!("../input/day24_in.txt")));
+    }
+
+    #[bench]
+    fn day24_bench_ex1(b: &mut Bencher) {
+        let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
+        b.iter(move || exercise_1(immune.clone(), infection.clone()));
+    }
+
+    #[bench]
+    fn day24_bench_ex2(b: &mut Bencher) {
+        let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
+        b.iter(move || exercise_2(immune.clone(), infection.clone()));
     }
 }
