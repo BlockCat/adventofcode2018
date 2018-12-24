@@ -180,19 +180,12 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>)-> (bool, u32)
         }
 
         for (group, target) in attack_order {
-            if *group.units.borrow() <= 0 {continue;} //Check if current group is still alive
+            let mut units = target.units.borrow_mut();
+            if *units <= 0 {continue;} //Check if current group is still alive
             
             let damage = group.effective_power() * target.get_damage_modifier(&group.damage);
-
             let units_killed = damage / target.hp;            
-            let units_killed = if units_killed > *target.units.borrow() {
-                *target.units.borrow()
-            } else {
-                units_killed
-            };
-
-            *target.units.borrow_mut() -= units_killed;
-
+            *units = (*units).saturating_sub(units_killed);
             //println!("{} attacks  {} for {} killing {} units", group.id, target.id, damage, units_killed);
         }
 
@@ -220,23 +213,20 @@ fn exercise_1_boosted(mut immunes: Vec<Group>, infections: Vec<Group>, boost: u3
     exercise_1(immunes, infections)
 }
 
-fn exercise_2(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> (u32, u32) {
+fn exercise_2(immunes: Vec<Group>, infections: Vec<Group>) -> (u32, u32) {
     let mut lower_boost = 1;
     let mut upper_boost = 1;
 
     while !exercise_1_boosted(immunes.clone(), infections.clone(), upper_boost).0 {
         lower_boost = upper_boost;
         upper_boost *= 2;        
-    }    
-    
-    println!("Between: {} and {}", lower_boost, upper_boost);
+    }
 
     while upper_boost - lower_boost > 1 {
         let average = (lower_boost + upper_boost) / 2;
-
         let (immune_win, _) = exercise_1_boosted(immunes.clone(), infections.clone(), average);
 
-        if immune_win { // It's between lower and average
+        if immune_win {
             upper_boost = average;
         } else {
             lower_boost = average;
@@ -248,19 +238,13 @@ fn exercise_2(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> (u32, u32)
     (upper_boost, left)
 }
 
-
-
 fn find_targets<'a, 'b>(currents: &'a Vec<Group>, other: &'b Vec<Group>) -> Vec<(&'a Group, Option<&'b Group>)> {
     let mut selected = vec!(false; other.len());    
     currents.iter().map(|s| {            
         let target = other.iter()
             .enumerate()
-            .filter(|(i, o)| !selected[*i] &&  s.effective_power() * o.get_damage_modifier(&s.damage) > 0)
-            /*.inspect(|(_, o)|
-                println!("{} would deal {} damage to {}", s.id, s.effective_power() * o.get_damage_modifier(&s.damage), o.id)
-            )*/
+            .filter(|(i, o)| !selected[*i] &&  o.get_damage_modifier(&s.damage) > 0)            
             .max_by_key(|(_, o)| (s.effective_power() * o.get_damage_modifier(&s.damage), o.effective_power(), o.initiative));
-
         if let Some(target) = target {
             selected[target.0] = true;
             (s, Some(target.1))
