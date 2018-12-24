@@ -19,8 +19,10 @@ impl From<&str> for Damage {
     }
 }
 
+#[derive(Clone)]
 struct Group {
     id: String,
+    is_immune: bool,
     attack: u32,
     damage: Damage,
     units: RefCell<u32>,
@@ -52,7 +54,7 @@ impl Group {
 
 pub fn execute_exercises() {
     let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
-    println!("Units left of the winning team: {}", exercise_1(immune, infection)); // 4677 too low
+    println!("Units left of the winning team: {:?}", exercise_1(immune, infection)); // 4677 too low
 
     //let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
     //println!("Bots in range of max: {}", exercise_1(immune, infection)); // 4677 too low
@@ -63,13 +65,13 @@ fn parse_input(input: &str) -> (Vec<Group>, Vec<Group>) {
     let mut iter = input.lines();
     iter.next();
 
-    let immune = iter.by_ref().enumerate().take_while(|s| s.1 != "Infection:").map(|(i, l)| parse_line(format!("Immune {}", i+1), l)).collect();
-    let infection = iter.enumerate().map(|(i, l)| parse_line(format!("Infection {}", i+1), l)).collect();    
+    let immune = iter.by_ref().enumerate().take_while(|s| s.1 != "Infection:").map(|(i, l)| parse_line(format!("Immune {}", i+1), l, true)).collect();
+    let infection = iter.enumerate().map(|(i, l)| parse_line(format!("Infection {}", i+1), l, false)).collect();    
 
     (immune, infection)
 }
 
-fn parse_line(id: String, line: &str) -> Group {        
+fn parse_line(id: String, line: &str, is_immune: bool) -> Group {        
     let mut line = line.split(' ');
     let units = line.next().unwrap().parse().unwrap();
     line.next();
@@ -131,6 +133,7 @@ fn parse_line(id: String, line: &str) -> Group {
     Group {
         id: id,
         attack: attack,
+        is_immune: is_immune,
         damage: damage,
         units: RefCell::new(units),
         hp: hp,
@@ -141,23 +144,19 @@ fn parse_line(id: String, line: &str) -> Group {
     }
 }
 
-
-
-fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> u32 {
+fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>)-> (bool, u32) {
 
     loop {
-        let mut immune_selected = vec!(false; immunes.len());
-        let mut infection_selected = vec!(false; immunes.len());
         // Start by finding targets
         // At this point all the items are alive        
 
-        for group in &immunes {
+        /*for group in &immunes {
             println!("{} has {} units left", group.id, *group.units.borrow());
         }
 
         for group in &infections {
             println!("{} has {} units left", group.id, *group.units.borrow());
-        }
+        }*/
 
         infections.sort_by_key(|s| Reverse((s.effective_power(), s.initiative)));
         immunes.sort_by_key(|s| Reverse((s.effective_power(), s.initiative)));        
@@ -182,6 +181,7 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> u32 {
             if *group.units.borrow() <= 0 {continue;} //Check if current group is still alive
             
             let damage = group.effective_power() * target.get_damage_modifier(&group.damage);
+
             let units_killed = damage / target.hp;            
             let units_killed = if units_killed > *target.units.borrow() {
                 *target.units.borrow()
@@ -191,7 +191,7 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> u32 {
 
             *target.units.borrow_mut() -= units_killed;
 
-            println!("{} attacks  {} for {} killing {} units", group.id, target.id, damage, units_killed);
+            //println!("{} attacks  {} for {} killing {} units", group.id, target.id, damage, units_killed);
         }
 
         // Only keep the alive ones
@@ -199,15 +199,41 @@ fn exercise_1(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> u32 {
         infections = infections.into_iter().filter(|s| s.is_alive()).collect();
 
         if immunes.is_empty() {
-            return infections.iter().map(|s| *s.units.borrow()).sum();
+            return (false, infections.iter().map(|s| *s.units.borrow()).sum());
         }
 
         if infections.is_empty() {
-            return immunes.iter().map(|s| *s.units.borrow()).sum();
+            return (true, immunes.iter().map(|s| *s.units.borrow()).sum());
         }
         //return 0;
     }
 }
+
+fn exercise_1_boosted(mut immunes: Vec<Group>, infections: Vec<Group>, boost: u32) -> (bool, u32) {
+    for c in &mut immunes{
+        c.attack += boost;
+    }
+
+    exercise_1(immunes, infections)
+}
+
+fn exercise_2(mut immunes: Vec<Group>, mut infections: Vec<Group>) -> (u32, u32) {
+    let mut lower_boost = 1;
+    let mut boost = 1;
+
+    while {
+        !exercise_1_boosted(immunes.clone(), infections.clone(), boost).0
+    }{
+        lower_boost = boost;
+        boost *= 2;
+    }
+
+    println!("Between: {} and {}", lower_boost, boost);
+
+    0
+}
+
+
 
 fn find_targets<'a, 'b>(currents: &'a Vec<Group>, other: &'b Vec<Group>) -> Vec<(&'a Group, Option<&'b Group>)> {
     let mut selected = vec!(false; other.len());    
@@ -245,10 +271,29 @@ Infection:
 4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4";
         let (immune, infection) = parse_input(input);
 
-        let result = exercise_1(immune, infection);
+        let result = exercise_1(immune, infection);        
 
-        println!("Result: {}", result);
+        assert_eq!(result, (false, 5216));
+    }
 
-        assert_eq!(result, 5216);
+    #[test]
+    fn day24_ex1_s2() {
+        let (immune, infection) = parse_input(include_str!("../input/day24_in.txt"));
+        assert_eq!(exercise_1(immune, infection), (false, 16006));
+    }
+
+    #[test]
+    fn day24_ex2_s1() {
+        let input = r"Immune System:
+17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2
+989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3
+Infection:
+801 units each with 4706 hit points (weak to radiation) with an attack that does 116 bludgeoning damage at initiative 1
+4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4";
+        let (immune, infection) = parse_input(input);      
+
+        let result = exercise_2(immune, infection);
+
+        assert_eq!(result, (1570, 51));
     }
 }
