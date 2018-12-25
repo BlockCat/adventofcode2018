@@ -84,4 +84,5 @@ test day24::tests::day24_bench_ex1  ... bench:   1,801,101 ns/iter (+/- 80,831)
 test day24::tests::day24_bench_ex2  ... bench:  25,806,550 ns/iter (+/- 466,207)
 test day24::tests::day24_bench_read ... bench:      14,596 ns/iter (+/- 683)
 
+test day25::tests::day25_bench_ex1 ... bench:   4,076,980 ns/iter (+/- 837,382)
 ```
