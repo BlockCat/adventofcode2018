@@ -28,18 +28,32 @@ fn parse_input(input: &str) -> Vec<Star> {
 }
 
 fn exercise_1(mut input: Vec<Star>) -> usize {
+
+    input.sort_unstable_by_key(|Star { location: (a, b, c, d), origin_star: _}| {        
+        a + b + c + d
+    });
+
     for i in 0..input.len()-1 {
+        let (a, b, c, d) = input[i].location;
+        let mapped_4d = a + b + c + d;       
+
+        let mut i_ancestor = find_ancestor(&mut input, i);
+
         for j in (i+1)..input.len() {
+            let (a, b, c, d) = input[j].location;
+            if a + b + c + d - mapped_4d > 3 { //Early out
+                break;
+            }
             if distance(&input[i].location, &input[j].location) <= 3 {
-                let i_ancestor = find_ancestor(&mut input, i);
-                let j_ancestor = find_ancestor(&mut input, j);
                 
+                let j_ancestor = find_ancestor(&mut input, j);                
                 if i_ancestor == j_ancestor {
                     continue;
                 } else {
                     input[i_ancestor].origin_star = Some(j_ancestor);
-                }               
-            }            
+                    i_ancestor = j_ancestor;
+                }
+            }
         }        
     }
 
@@ -55,7 +69,7 @@ fn distance((w1, x1, y1, z1): &Location, (w2, x2, y2, z2): &Location) -> isize {
 
 fn find_ancestor(input: &mut Vec<Star>, mut origin: usize) -> usize {
     let mut start = origin;    
-    while let Some(new_origin) = input[origin].origin_star {
+    while let Some(new_origin) = input[origin].origin_star {        
         origin = new_origin;        
     }
     
